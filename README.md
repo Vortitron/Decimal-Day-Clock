@@ -53,6 +53,31 @@ Recommended digital format: `HH:MM:SS` where:
 
 Analogue clocks could use a 96-mark face with a minute hand that completes one revolution every 10 normal minutes (900 seconds).
 
+## Timezones and Solar Reference
+
+This clock implements a **single global time** system: everyone worldwide uses the same clock numbers (1–96 hours) at the same instant, based directly on UTC (Coordinated Universal Time) with no offsets applied.
+
+### Rationale
+- Eliminates all timezone conversion complexity.
+- Perfectly suits a connected world where international scheduling, broadcasts, and software timestamps should be effortless.
+- Complements the rational, metric structure of the 96-hour day.
+
+Traditional timezones are not used. Local clocks do not adjust for longitude or daylight saving.
+
+### Local Solar Reference (Optional Feature)
+The main clock remains pure global time, but the app can provide **local solar context** to help users align with natural daylight:
+
+- Uses device GPS (or manual longitude input) to calculate approximate solar times for the user's location.
+- Key references (adjusted for longitude, date, and latitude where needed):
+  - **Local Solar Noon**: When the sun is highest (directly south/north).
+    - Base: ~48:00 at Greenwich (0° longitude).
+    - Shifts by **4 hours** per 15° longitude (east: earlier, west: later).
+  - **Equatorial Sunrise/Sunset**: Clean baseline assuming 12-hour days at the equator.
+    - Sunrise ≈ 12 hours before solar noon.
+    - Sunset ≈ 12 hours after solar noon.
+- More accurate calculations can include the equation of time and latitude effects for real sunrise/sunset.
+
+
 ## Features to Implement
 
 - Real-time clock displaying current time in the new system.
