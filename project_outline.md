@@ -6,6 +6,7 @@
 - Show the current time in the **96-hour / 10-minute / 90-second** system.
 - Provide both **digital** and **analogue** clock views.
 - Support the **overlap/crossover** window so the first minute of each hour can also be labelled as the previous hour’s minute 11.
+- Show a simple UTC-based **10-day-week date** (year + week + day).
 - Provide a simple **midsun (solar noon)** reference based on longitude (optional geolocation).
 - Provide **converters** from:
   - Unix time (s/ms)
@@ -58,6 +59,15 @@ The app supports two output styles:
 
 Implemented by:
 - `formatDecimalLabelWithStyle(label, style, opts)`
+
+## Date (10-day weeks)
+
+Implemented by:
+- `getTenDayWeekDateFromUnixMs(unixMs)` returning:
+  - `year`
+  - `week` (10-day weeks, starting at 1)
+  - `day` (1–10)
+  - `dayOfYear`, `yearLengthDays`
 
 ## Midsun model (approximation)
 

@@ -2,6 +2,7 @@ import {
 	formatSignedTimeDeltaSeconds,
 	formatDecimalLabelWithStyle,
 	getDecimalLabelsFromUtcSecondsOfDay,
+	getTenDayWeekDateFromUnixMs,
 	parseLongitudeDegrees,
 	parseUnixValueToUnixMs,
 	shortestSignedDeltaSeconds,
@@ -180,11 +181,14 @@ function renderDecimalTime({ nowUnixMs, settings }) {
 	const utcTime = now.toISOString().slice(11, 19)
 	const unixSeconds = Math.floor(nowUnixMs / 1000)
 	const overlapNote = isOverlapWindow ? 'Overlap: minute 11 available.' : ''
+	const decDate = getTenDayWeekDateFromUnixMs(nowUnixMs)
+	const decDateStr = `${decDate.year} W${String(decDate.week).padStart(2, '0')} D${String(decDate.day).padStart(2, '0')}`
+	const line1 = `Date ${decDateStr}`
 	const metaParts = [`UTC ${utcDate} ${utcTime}Z`, `Unix ${unixSeconds}`]
 	if (overlapNote) {
 		metaParts.push(overlapNote)
 	}
-	setText(metaEl, metaParts.join(' • '))
+	setText(metaEl, `${line1}\n${metaParts.join(' • ')}`)
 
 	const isAnalogue = mode === 'analogue'
 	setHidden(canvasEl, !isAnalogue)

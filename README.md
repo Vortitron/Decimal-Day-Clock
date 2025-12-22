@@ -55,6 +55,16 @@ The app supports two digital formats:
   - If minute is hidden, brackets are kept empty: `46()`
   - You can also hide the hour to show just minute(+seconds): `(06)08`
 
+### Date (10-day weeks)
+
+The UI shows a simple date line using **10-day weeks** (UTC-based):
+
+- Format: `YYYY W## D##`
+- `W##` is the week number counting from 1, where each week is 10 days
+- `D##` is the day within the 10-day week (01–10)
+
+No month concept is used at present; the year length remains Gregorian (365/366 days).
+
 ## Timezones and solar reference
 
 The main clock is **global** and based on **UTC** (everyone sees the same decimal time at the same instant).

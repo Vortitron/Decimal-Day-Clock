@@ -4,6 +4,7 @@ import test from 'node:test'
 import {
 	getDecimalLabelsFromUtcSecondsOfDay,
 	formatDecimalLabelWithStyle,
+	getTenDayWeekDateFromUnixMs,
 	solarNoonUtcSecondsOfDayFromLongitude,
 	unixMsToUtcSecondsOfDay,
 	wallTimeWithUtcOffsetToUnixMs,
@@ -85,6 +86,35 @@ test('bracket format supports HH(MM)SS, 46(), and (MM)SS', () => {
 		formatDecimalLabelWithStyle(label, 'brackets', { showHour: false, showMinute: true, showSeconds: true }),
 		'(06)08'
 	)
+})
+
+test('10-day week date mapping basics (UTC)', () => {
+	const jan1 = Date.UTC(2025, 0, 1, 0, 0, 0)
+	const jan10 = Date.UTC(2025, 0, 10, 12, 0, 0)
+	const jan11 = Date.UTC(2025, 0, 11, 23, 59, 59)
+	const dec31 = Date.UTC(2025, 11, 31, 0, 0, 0)
+
+	assert.deepEqual(getTenDayWeekDateFromUnixMs(jan1), {
+		year: 2025,
+		week: 1,
+		day: 1,
+		dayOfYear: 1,
+		yearLengthDays: 365,
+	})
+
+	const d10 = getTenDayWeekDateFromUnixMs(jan10)
+	assert.equal(d10.year, 2025)
+	assert.equal(d10.week, 1)
+	assert.equal(d10.day, 10)
+
+	const d11 = getTenDayWeekDateFromUnixMs(jan11)
+	assert.equal(d11.week, 2)
+	assert.equal(d11.day, 1)
+
+	const dDec31 = getTenDayWeekDateFromUnixMs(dec31)
+	assert.equal(dDec31.dayOfYear, 365)
+	assert.equal(dDec31.week, 37)
+	assert.equal(dDec31.day, 5)
 })
 
 

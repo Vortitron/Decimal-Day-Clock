@@ -16,6 +16,10 @@ function angleFromTop(fraction) {
 	return (fraction * TAU) - (Math.PI / 2)
 }
 
+function pad2(n) {
+	return String(n).padStart(2, '0')
+}
+
 function setCanvasSizeForCssPixels(canvas, cssPx) {
 	const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1))
 	const size = Math.max(100, Math.floor(cssPx))
@@ -174,7 +178,7 @@ export function renderAnalogueClock({ canvas, utcSecondsOfDay, showSeconds, show
 	const secondAngle = angleFromTop(secondFraction)
 
 	if (showOverlap) {
-		drawMinuteOverlapGuide(ctx, cx, cy, r, parts.isOverlapWindow)
+		drawMinuteOverlapSpiral(ctx, cx, cy, r, minuteFraction, parts.isOverlapWindow, parts.hourIndex)
 	}
 
 	// Hour hand: one revolution per day, points at 96-hour dial.
@@ -191,43 +195,95 @@ export function renderAnalogueClock({ canvas, utcSecondsOfDay, showSeconds, show
 	drawCentre(ctx, cx, cy)
 }
 
-function drawMinuteOverlapGuide(ctx, cx, cy, rOuter, isInOverlapWindow) {
-	// Overlap only happens at the start of each hour, i.e. when the minute hand is near vertical.
-	// Visualise it as a “double track” segment for the first 90 seconds (10% of the 900s hour).
+function drawMinuteOverlapSpiral(ctx, cx, cy, rOuter, minuteFraction, isInOverlapWindow, hourIndex) {
+	// Represent the crossover minute (11) as a continuation beyond the hour boundary:
+	// - normal minutes (1..10): outer minute ring (full circle)
+	// - crossover minute (11): spiral inward at the top, then continue for 10% of a circle on an inner ring
+
+	const overlapFraction = 0.1 // 90s of 900s
+	const connectorFraction = 0.035 // short spiral approaching the top
 
 	const rMinuteOuter = rOuter * 0.78
-	const rMinuteInner = rMinuteOuter - 10
+	const rMinuteInner = rMinuteOuter - 14
 
-	// Subtle minute track (so the double-segment feels like it can “continue inside”)
+	// Outer minute ring (normal minutes)
 	ctx.save()
 	ctx.beginPath()
 	ctx.arc(cx, cy, rMinuteOuter, 0, TAU)
-	ctx.strokeStyle = 'rgba(255,255,255,0.06)'
+	ctx.strokeStyle = 'rgba(255,255,255,0.08)'
 	ctx.lineWidth = 2
 	ctx.stroke()
 	ctx.restore()
 
-	const a1 = angleFromTop(0)
-	const a2 = angleFromTop(0.1) // first 90s of 900s
-
-	const baseColour = isInOverlapWindow ? 'rgba(255,110,138,0.55)' : 'rgba(255,255,255,0.18)'
-	const baseWidth = isInOverlapWindow ? 5 : 4
+	// Inner overlap ring segment (minute 11 continuation)
+	const overlapA1 = angleFromTop(0)
+	const overlapA2 = angleFromTop(overlapFraction)
 
 	ctx.save()
-	ctx.strokeStyle = baseColour
-	ctx.lineWidth = baseWidth
+	ctx.strokeStyle = 'rgba(255,255,255,0.16)'
+	ctx.lineWidth = 4
 	ctx.lineCap = 'round'
-
-	// Outer segment
 	ctx.beginPath()
-	ctx.arc(cx, cy, rMinuteOuter, a1, a2, false)
+	ctx.arc(cx, cy, rMinuteInner, overlapA1, overlapA2, false)
 	ctx.stroke()
+	ctx.restore()
 
-	// Inner parallel segment (the “double line”)
+	// Spiral connector: from outer ring down to inner ring, ending at the top (fraction 1.0 == 0.0)
+	const startFraction = 1 - connectorFraction
+	const steps = 64
+
+	ctx.save()
+	ctx.strokeStyle = 'rgba(255,255,255,0.22)'
+	ctx.lineWidth = 4
+	ctx.lineCap = 'round'
+	ctx.lineJoin = 'round'
 	ctx.beginPath()
-	ctx.arc(cx, cy, rMinuteInner, a1, a2, false)
-	ctx.stroke()
 
+	for (let i = 0; i <= steps; i += 1) {
+		const t = i / steps
+		const f = startFraction + (t * connectorFraction)
+		const a = angleFromTop(f)
+		const r = rMinuteOuter - (t * (rMinuteOuter - rMinuteInner))
+		const x = cx + (Math.cos(a) * r)
+		const y = cy + (Math.sin(a) * r)
+		if (i === 0) {
+			ctx.moveTo(x, y)
+		} else {
+			ctx.lineTo(x, y)
+		}
+	}
+	ctx.stroke()
+	ctx.restore()
+
+	// Highlight current overlap progress on the inner segment when within the overlap window.
+	if (isInOverlapWindow) {
+		const progress = Math.max(0, Math.min(overlapFraction, minuteFraction))
+		ctx.save()
+		ctx.strokeStyle = 'rgba(255,110,138,0.60)'
+		ctx.lineWidth = 5
+		ctx.lineCap = 'round'
+		ctx.beginPath()
+		ctx.arc(cx, cy, rMinuteInner, angleFromTop(0), angleFromTop(progress), false)
+		ctx.stroke()
+		ctx.restore()
+	}
+
+	// Label the inner segment as 11 (subtle).
+	ctx.save()
+	ctx.fillStyle = isInOverlapWindow ? 'rgba(255,255,255,0.78)' : 'rgba(255,255,255,0.50)'
+	ctx.textAlign = 'center'
+	ctx.textBaseline = 'middle'
+	const fontPx = Math.max(10, Math.floor(rOuter * 0.055))
+	ctx.font = `600 ${fontPx}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace`
+	const labelAngle = angleFromTop(overlapFraction * 0.55)
+	const lx = cx + (Math.cos(labelAngle) * (rMinuteInner - 16))
+	const ly = cy + (Math.sin(labelAngle) * (rMinuteInner - 16))
+
+	// The overlap window is labelled as the previous hour’s minute 11.
+	// Example: at the start of hour 1, the overlap reads as 96(11).
+	const currentHour = hourIndex + 1
+	const prevHour = currentHour === 1 ? HOURS_PER_DAY : (currentHour - 1)
+	ctx.fillText(`${pad2(prevHour)}(11)`, lx, ly)
 	ctx.restore()
 }
 

@@ -1,4 +1,5 @@
 const SECONDS_PER_DAY = 86_400
+const MS_PER_DAY = 86_400_000
 const SECONDS_PER_HOUR = 900
 const SECONDS_PER_MINUTE = 90
 const HOURS_PER_DAY = 96
@@ -88,6 +89,32 @@ export function unixMsToUtcSecondsOfDay(unixMs) {
 export function unixMsToUtcSecondsOfDayPrecise(unixMs) {
 	assertFiniteNumber(unixMs, 'unixMs')
 	return mod(unixMs / 1000, SECONDS_PER_DAY)
+}
+
+export function getTenDayWeekDateFromUnixMs(unixMs) {
+	assertFiniteNumber(unixMs, 'unixMs')
+
+	const d = new Date(unixMs)
+	const year = d.getUTCFullYear()
+	const monthIndex = d.getUTCMonth()
+	const dayOfMonth = d.getUTCDate()
+
+	const utcMidnightMs = Date.UTC(year, monthIndex, dayOfMonth)
+	const yearStartMs = Date.UTC(year, 0, 1)
+	const dayOfYear = Math.floor((utcMidnightMs - yearStartMs) / MS_PER_DAY) + 1
+
+	const yearLengthDays = Math.floor((Date.UTC(year + 1, 0, 1) - yearStartMs) / MS_PER_DAY)
+
+	const week = Math.floor((dayOfYear - 1) / 10) + 1
+	const day = ((dayOfYear - 1) % 10) + 1
+
+	return {
+		year,
+		week,
+		day,
+		dayOfYear,
+		yearLengthDays,
+	}
 }
 
 export function parseLongitudeDegrees(raw) {
