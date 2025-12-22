@@ -13,12 +13,29 @@
 			<section class="clock" aria-label="Current time">
 				<div class="clock__time" id="clock-time">--:--:--</div>
 				<div class="clock__alt" id="clock-alt" hidden></div>
+				<canvas class="clock__canvas" id="clock-canvas" hidden></canvas>
 				<div class="clock__meta" id="clock-meta"></div>
 			</section>
 
 			<section class="panel" aria-label="Options and converters">
 				<div class="panel__section">
 					<h2 class="panel__title">Display</h2>
+					<div class="panel__row panel__row--grid">
+						<label class="field">
+							<span class="field__label">Format</span>
+							<select class="field__input" id="sel-format">
+								<option value="colon" selected>Colon: HH:MM(:SS)</option>
+								<option value="brackets">Brackets: HH(MM)SS</option>
+							</select>
+						</label>
+						<label class="field">
+							<span class="field__label">Mode</span>
+							<select class="field__input" id="sel-mode">
+								<option value="digital" selected>Digital</option>
+								<option value="analogue">Analogue</option>
+							</select>
+						</label>
+					</div>
 					<div class="panel__row">
 						<label class="switch">
 							<input type="checkbox" id="opt-show-seconds" checked>
@@ -35,6 +52,16 @@
 						<label class="switch">
 							<input type="checkbox" id="opt-prefer-crossover">
 							<span>Prefer crossover label during overlap</span>
+						</label>
+					</div>
+					<div class="panel__row panel__row--grid">
+						<label class="switch">
+							<input type="checkbox" id="opt-show-hour" checked>
+							<span>Show hour</span>
+						</label>
+						<label class="switch">
+							<input type="checkbox" id="opt-show-minute" checked>
+							<span>Show minute</span>
 						</label>
 					</div>
 				</div>

@@ -1,14 +1,17 @@
 import {
-	formatDecimalLabel,
 	formatSignedTimeDeltaSeconds,
+	formatDecimalLabelWithStyle,
 	getDecimalLabelsFromUtcSecondsOfDay,
 	parseLongitudeDegrees,
 	parseUnixValueToUnixMs,
 	shortestSignedDeltaSeconds,
 	solarNoonUtcSecondsOfDayFromLongitude,
 	unixMsToUtcSecondsOfDay,
+	unixMsToUtcSecondsOfDayPrecise,
 	wallTimeWithUtcOffsetToUnixMs,
 } from './time.js'
+
+import { renderAnalogueClock } from './analogue.js'
 
 const CLOCK_TICK_MS = 100
 const STORAGE_KEY = 'decimal-day-clock:v1'
@@ -94,14 +97,40 @@ function getClockSettings() {
 	const showSeconds = Boolean($('opt-show-seconds').checked)
 	const showOverlap = Boolean($('opt-show-overlap').checked)
 	const preferCrossover = Boolean($('opt-prefer-crossover').checked)
+	const showHour = Boolean($('opt-show-hour').checked)
+	const showMinute = Boolean($('opt-show-minute').checked)
+	const formatStyle = $('sel-format').value
+	const mode = $('sel-mode').value
 
-	return { showSeconds, showOverlap, preferCrossover }
+	// Guardrails:
+	// - If seconds are shown, minute should be shown (otherwise the output is confusing).
+	// - If both hour and minute are hidden, force hour.
+	const effectiveShowMinute = showSeconds ? true : showMinute
+	const effectiveShowHour = (!showHour && !effectiveShowMinute) ? true : showHour
+
+	return {
+		showSeconds,
+		showOverlap,
+		preferCrossover,
+		showHour: effectiveShowHour,
+		showMinute: effectiveShowMinute,
+		formatStyle: (formatStyle === 'brackets') ? 'brackets' : 'colon',
+		mode: (mode === 'analogue') ? 'analogue' : 'digital',
+	}
 }
 
 function applySettingsToUi(settings) {
 	$('opt-show-seconds').checked = Boolean(settings.showSeconds)
 	$('opt-show-overlap').checked = Boolean(settings.showOverlap)
 	$('opt-prefer-crossover').checked = Boolean(settings.preferCrossover)
+	$('opt-show-hour').checked = (settings.showHour !== false)
+	$('opt-show-minute').checked = (settings.showMinute !== false)
+	if (settings.formatStyle === 'brackets') {
+		$('sel-format').value = 'brackets'
+	}
+	if (settings.mode === 'analogue') {
+		$('sel-mode').value = 'analogue'
+	}
 
 	if (typeof settings.longitude === 'number') {
 		$('in-longitude').value = String(settings.longitude)
@@ -116,30 +145,57 @@ function getLongitudeFromUi() {
 function renderDecimalTime({ nowUnixMs, settings }) {
 	const clockTimeEl = $('clock-time')
 	const clockAltEl = $('clock-alt')
+	const canvasEl = $('clock-canvas')
 	const metaEl = $('clock-meta')
 
 	const utcSecondsOfDay = unixMsToUtcSecondsOfDay(nowUnixMs)
+	const utcSecondsOfDayPrecise = unixMsToUtcSecondsOfDayPrecise(nowUnixMs)
 	const { primary, alternate, isOverlapWindow } = getDecimalLabelsFromUtcSecondsOfDay(utcSecondsOfDay)
 
 	const showSeconds = settings.showSeconds
 	const showOverlap = settings.showOverlap
 	const preferCrossover = settings.preferCrossover
+	const showHour = settings.showHour
+	const showMinute = settings.showMinute
+	const formatStyle = settings.formatStyle
+	const mode = settings.mode
 
 	const mainLabel = (preferCrossover && alternate) ? alternate : primary
 	const altLabel = (preferCrossover && alternate) ? primary : alternate
 
-	setText(clockTimeEl, formatDecimalLabel(mainLabel, showSeconds))
+	const formattedMain = formatDecimalLabelWithStyle(mainLabel, formatStyle, { showHour, showMinute, showSeconds })
+	setText(clockTimeEl, formattedMain)
 
 	const shouldShowAlt = Boolean(showOverlap && isOverlapWindow && altLabel)
 	setHidden(clockAltEl, !shouldShowAlt)
 	if (shouldShowAlt) {
-		setText(clockAltEl, `overlap: ${formatDecimalLabel(altLabel, showSeconds)}`)
+		const formattedAlt = formatDecimalLabelWithStyle(altLabel, formatStyle, { showHour, showMinute, showSeconds })
+		setText(clockAltEl, `overlap: ${formattedAlt}`)
 	}
 
-	const iso = new Date(nowUnixMs).toISOString()
+	const now = new Date(nowUnixMs)
+	const utcDate = now.toISOString().slice(0, 10)
+	const utcTime = now.toISOString().slice(11, 19)
 	const unixSeconds = Math.floor(nowUnixMs / 1000)
-	const overlapNote = isOverlapWindow ? 'Overlap window: minute 11 available for previous hour.' : 'No overlap window.'
-	setText(metaEl, `UTC: ${iso} • Unix: ${unixSeconds} • ${overlapNote}`)
+	const overlapNote = isOverlapWindow ? 'Overlap: minute 11 available.' : ''
+	const metaParts = [`UTC ${utcDate} ${utcTime}Z`, `Unix ${unixSeconds}`]
+	if (overlapNote) {
+		metaParts.push(overlapNote)
+	}
+	setText(metaEl, metaParts.join(' • '))
+
+	const isAnalogue = mode === 'analogue'
+	setHidden(canvasEl, !isAnalogue)
+	setHidden(clockAltEl, isAnalogue ? true : !shouldShowAlt)
+	setHidden(clockTimeEl, isAnalogue)
+
+	if (isAnalogue) {
+		try {
+			renderAnalogueClock({ canvas: canvasEl, utcSecondsOfDay: utcSecondsOfDayPrecise, showSeconds })
+		} catch (err) {
+			logError('Analogue render failed', err)
+		}
+	}
 }
 
 function renderMidsun({ nowUnixMs }) {
@@ -167,8 +223,9 @@ function renderMidsun({ nowUnixMs }) {
 		const delta = shortestSignedDeltaSeconds(targetSeconds, nowSeconds)
 		const { primary, alternate, isOverlapWindow } = getDecimalLabelsFromUtcSecondsOfDay(targetSeconds)
 
-		const main = formatDecimalLabel(primary, true)
-		const alt = alternate ? formatDecimalLabel(alternate, true) : null
+		const settings = getClockSettings()
+		const main = formatDecimalLabelWithStyle(primary, settings.formatStyle, { showHour: true, showMinute: true, showSeconds: true })
+		const alt = alternate ? formatDecimalLabelWithStyle(alternate, settings.formatStyle, { showHour: true, showMinute: true, showSeconds: true }) : null
 		const overlap = isOverlapWindow && alt ? ` (alt: ${alt})` : ''
 
 		setText(midsunEl, `${main}${overlap} • Δ ${formatSignedTimeDeltaSeconds(delta)}`)
@@ -223,8 +280,9 @@ function describeDecimalForUnixMs(unixMs) {
 	const utcSecondsOfDay = unixMsToUtcSecondsOfDay(unixMs)
 	const { primary, alternate, isOverlapWindow } = getDecimalLabelsFromUtcSecondsOfDay(utcSecondsOfDay)
 
-	const primaryStr = formatDecimalLabel(primary, true)
-	const altStr = alternate ? formatDecimalLabel(alternate, true) : null
+	const settings = getClockSettings()
+	const primaryStr = formatDecimalLabelWithStyle(primary, settings.formatStyle, { showHour: true, showMinute: true, showSeconds: true })
+	const altStr = alternate ? formatDecimalLabelWithStyle(alternate, settings.formatStyle, { showHour: true, showMinute: true, showSeconds: true }) : null
 	const overlap = isOverlapWindow && altStr ? ` (alt: ${altStr})` : ''
 
 	return {
@@ -352,6 +410,10 @@ function wireSettingsPersistence() {
 	$('opt-show-seconds').addEventListener('change', save)
 	$('opt-show-overlap').addEventListener('change', save)
 	$('opt-prefer-crossover').addEventListener('change', save)
+	$('opt-show-hour').addEventListener('change', save)
+	$('opt-show-minute').addEventListener('change', save)
+	$('sel-format').addEventListener('change', save)
+	$('sel-mode').addEventListener('change', save)
 	$('in-longitude').addEventListener('input', save)
 }
 

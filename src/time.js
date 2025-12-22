@@ -46,6 +46,7 @@ export function getDecimalPartsFromUtcSecondsOfDay(utcSecondsOfDay) {
 	return {
 		secondsOfDay: seconds,
 		hourIndex,
+		secondsIntoHour,
 		minuteIndex,
 		secondInMinute,
 		isOverlapWindow,
@@ -82,6 +83,11 @@ export function unixMsToUtcSecondsOfDay(unixMs) {
 	assertFiniteNumber(unixMs, 'unixMs')
 	const seconds = Math.floor(unixMs / 1000)
 	return mod(seconds, SECONDS_PER_DAY)
+}
+
+export function unixMsToUtcSecondsOfDayPrecise(unixMs) {
+	assertFiniteNumber(unixMs, 'unixMs')
+	return mod(unixMs / 1000, SECONDS_PER_DAY)
 }
 
 export function parseLongitudeDegrees(raw) {
@@ -223,6 +229,55 @@ export function parseUnixValueToUnixMs(raw, unit) {
 	}
 
 	throw new Error('Unknown Unix unit')
+}
+
+function formatColon({ hour, minute, second }, { showHour, showMinute, showSeconds }) {
+	if (!showHour && !showMinute) {
+		return pad2(hour)
+	}
+
+	if (showHour && showMinute && showSeconds) {
+		return `${pad2(hour)}:${pad2(minute)}:${pad2(second)}`
+	}
+	if (showHour && showMinute && !showSeconds) {
+		return `${pad2(hour)}:${pad2(minute)}`
+	}
+	if (showHour && !showMinute) {
+		return pad2(hour)
+	}
+	if (!showHour && showMinute && showSeconds) {
+		return `${pad2(minute)}:${pad2(second)}`
+	}
+	if (!showHour && showMinute && !showSeconds) {
+		return pad2(minute)
+	}
+
+	return pad2(hour)
+}
+
+function formatBrackets({ hour, minute, second }, { showHour, showMinute, showSeconds }) {
+	const hourStr = showHour ? pad2(hour) : ''
+	const minuteStr = showMinute ? pad2(minute) : ''
+	const secondsStr = showSeconds ? pad2(second) : ''
+
+	// Always show brackets as the minute “slot”, even if minute is hidden.
+	if (showSeconds) {
+		return `${hourStr}(${minuteStr})${secondsStr}`
+	}
+	return `${hourStr}(${minuteStr})`
+}
+
+export function formatDecimalLabelWithStyle(label, style, opts) {
+	const safeOpts = {
+		showHour: Boolean(opts?.showHour),
+		showMinute: Boolean(opts?.showMinute),
+		showSeconds: Boolean(opts?.showSeconds),
+	}
+
+	if (style === 'brackets') {
+		return formatBrackets(label, safeOpts)
+	}
+	return formatColon(label, safeOpts)
 }
 
 

@@ -6,8 +6,11 @@ This repository is a **static site** (no build step) designed to be hosted on **
 
 ## What you get
 
-- **Fullscreen decimal clock**: `HH:MM(:SS)` where `HH` = 01–96, `MM` = 01–11, `SS` = 00–89.
+- **Fullscreen decimal clock** with selectable formats:
+  - **Colon**: `HH:MM(:SS)` where `HH` = 01–96, `MM` = 01–11, `SS` = 00–89
+  - **Brackets**: `HH(MM)SS` (minute is always in brackets, even if empty: `46()`)
 - **Overlap/crossover support**: optionally show the alternate reading during the overlap window.
+- **Analogue mode**: 96-hour dial with hands for day-progress (hour), minute-in-hour, and optional seconds.
 - **Midsun (solar noon) helper**: optional geolocation (or manual longitude) to show the *midsun point* in decimal time and the time delta to/from it.
 - **Converters**:
   - Unix time (seconds or milliseconds) → decimal
@@ -41,6 +44,16 @@ Example around the change from hour 47 to 48:
 | last 90s of hour 47 | 47:10 | — |
 | first 90s of hour 48 | 48:01 | 47:11 |
 | next 90s of hour 48 | 48:02 | — |
+
+### Display formats
+
+The app supports two digital formats:
+
+- **Colon**: `HH:MM(:SS)`
+- **Brackets**: `HH(MM)SS`
+  - Minute is always inside brackets
+  - If minute is hidden, brackets are kept empty: `46()`
+  - You can also hide the hour to show just minute(+seconds): `(06)08`
 
 ## Timezones and solar reference
 

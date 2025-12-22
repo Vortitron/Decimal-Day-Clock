@@ -4,6 +4,7 @@
 
 - Provide a **static** (no-build) web app that can be hosted on **GitHub Pages**.
 - Show the current time in the **96-hour / 10-minute / 90-second** system.
+- Provide both **digital** and **analogue** clock views.
 - Support the **overlap/crossover** window so the first minute of each hour can also be labelled as the previous hour’s minute 11.
 - Provide a simple **midsun (solar noon)** reference based on longitude (optional geolocation).
 - Provide **converters** from:
@@ -19,7 +20,9 @@
   - Fullscreen layout and modern styling.
 - `src/main.js`
   - UI wiring, localStorage settings, periodic clock tick, and converter/midsun interactions.
-  - Imports all conversion logic from `src/time.js`.
+  - Imports conversion logic from `src/time.js` and drawing from `src/analogue.js`.
+- `src/analogue.js`
+  - Canvas renderer for the analogue dial/hands.
 - `src/time.js`
   - Pure conversion utilities (no DOM). This is the primary unit-test surface.
 - `test/time.test.js`
@@ -45,6 +48,16 @@ Implementation detail:
 - UI can:
   - show both readings, or
   - prefer the crossover label during overlap
+
+## Digital formatting
+
+The app supports two output styles:
+
+- `colon`: `HH:MM(:SS)`
+- `brackets`: `HH(MM)SS` (minute always appears in brackets; can be empty)
+
+Implemented by:
+- `formatDecimalLabelWithStyle(label, style, opts)`
 
 ## Midsun model (approximation)
 
