@@ -5,6 +5,7 @@ const HOURS_PER_DAY = 96
 const SECONDS_PER_DAY = 86_400
 const SECONDS_PER_HOUR = 900
 const SECONDS_PER_MINUTE = 90
+const MINUTES_PER_HOUR = 10
 
 function assertCanvas(canvas) {
 	if (!(canvas instanceof HTMLCanvasElement)) {
@@ -50,19 +51,19 @@ function drawHourTicks(ctx, cx, cy, rOuter) {
 		const fraction = i / HOURS_PER_DAY
 		const a = angleFromTop(fraction)
 
-		const isMajor = (hour % 8) === 0 || hour === 1
+		const isMajor = (hour % 8) === 0
 		const isMid = (hour % 4) === 0
 
-		let tickLen = 5
+		let tickLen = 4
 		let tickWidth = 1.5
 		let tickAlpha = 0.12
 
 		if (isMajor) {
-			tickLen = 12
+			tickLen = 10
 			tickWidth = 2.5
-			tickAlpha = 0.30
+			tickAlpha = 0.28
 		} else if (isMid) {
-			tickLen = 8
+			tickLen = 7
 			tickWidth = 2
 			tickAlpha = 0.18
 		}
@@ -83,27 +84,48 @@ function drawHourTicks(ctx, cx, cy, rOuter) {
 	ctx.restore()
 }
 
-function drawHourNumbers(ctx, cx, cy, rOuter) {
+function drawHourLabels(ctx, cx, cy, rOuter) {
 	ctx.save()
 	ctx.textAlign = 'center'
-	ctx.textBaseline = 'middle'
 
-	const fontPx = Math.max(12, Math.floor(rOuter * 0.064))
+	const fontPx = Math.max(11, Math.floor(rOuter * 0.058))
 	ctx.font = `600 ${fontPx}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace`
 
-	// Label every 4 hours for clean readability
+	// Label every 4 hours: hour number above the line, (minute range) below
 	for (let hour = 4; hour <= HOURS_PER_DAY; hour += 4) {
 		const i = hour - 1
 		const fraction = i / HOURS_PER_DAY
 		const a = angleFromTop(fraction)
 
-		const rText = rOuter - 24
-		const x = cx + (Math.cos(a) * rText)
-		const y = cy + (Math.sin(a) * rText)
+		const cos = Math.cos(a)
+		const sin = Math.sin(a)
 
-		const alpha = (hour % 8) === 0 ? 0.65 : 0.40
+		// Hour number: above the tick line (outside)
+		const rHour = rOuter + 16
+		const xHour = cx + (cos * rHour)
+		const yHour = cy + (sin * rHour)
+
+		const alpha = (hour % 8) === 0 ? 0.70 : 0.45
 		ctx.fillStyle = `rgba(255,255,255,${alpha})`
-		ctx.fillText(String(hour), x, y)
+		ctx.textBaseline = 'middle'
+		ctx.fillText(String(hour), xHour, yHour)
+
+		// Minute range in brackets: below the hour number (further out)
+		const minuteStart = 1
+		const minuteEnd = MINUTES_PER_HOUR
+		const minuteLabel = `(${minuteStart}-${minuteEnd})`
+
+		const rMinute = rOuter + 28
+		const xMinute = cx + (cos * rMinute)
+		const yMinute = cy + (sin * rMinute)
+
+		const fontPxSmall = Math.max(8, Math.floor(rOuter * 0.038))
+		ctx.font = `500 ${fontPxSmall}px ui-monospace, monospace`
+		ctx.fillStyle = `rgba(255,255,255,${alpha * 0.6})`
+		ctx.fillText(minuteLabel, xMinute, yMinute)
+
+		// Restore font for next hour
+		ctx.font = `600 ${fontPx}px ui-monospace, monospace`
 	}
 
 	ctx.restore()
@@ -112,7 +134,7 @@ function drawHourNumbers(ctx, cx, cy, rOuter) {
 function drawDayProgressArc(ctx, cx, cy, rOuter, dayFraction) {
 	ctx.save()
 	ctx.beginPath()
-	ctx.arc(cx, cy, rOuter + 8, angleFromTop(0), angleFromTop(dayFraction), false)
+	ctx.arc(cx, cy, rOuter + 42, angleFromTop(0), angleFromTop(dayFraction), false)
 	ctx.strokeStyle = 'rgba(110,231,255,0.55)'
 	ctx.lineWidth = 5
 	ctx.lineCap = 'round'
@@ -120,68 +142,44 @@ function drawDayProgressArc(ctx, cx, cy, rOuter, dayFraction) {
 	ctx.restore()
 }
 
-function drawSpiralMinuteTrack(ctx, cx, cy, r, showOverlap, isInOverlap, hourIndex, minuteFraction) {
+function drawOverlapInnerArc(ctx, cx, cy, r, showOverlap, isInOverlap, hourIndex) {
 	if (!showOverlap) {
 		return
 	}
 
-	const rOuter = r * 0.78
-	const rInner = r * 0.68
-	const normalEnd = 0.89 // End of minute 10 visually
+	// Small inner arc at the top (0° position) showing the overlap window.
+	// This represents minute 11 (the crossover minute).
+	const rInner = r * 0.75
+	const overlapSpan = 0.1 // 10% of circle (90s of 900s)
+
+	const a1 = angleFromTop(0)
+	const a2 = angleFromTop(overlapSpan)
 
 	ctx.save()
-	ctx.lineWidth = 2
+	ctx.beginPath()
+	ctx.arc(cx, cy, rInner, a1, a2, false)
+	ctx.strokeStyle = isInOverlap ? 'rgba(255,110,138,0.75)' : 'rgba(255,255,255,0.15)'
+	ctx.lineWidth = isInOverlap ? 3.5 : 2.5
 	ctx.lineCap = 'round'
-
-	// Outer ring (minutes 1–10)
-	ctx.beginPath()
-	ctx.arc(cx, cy, rOuter, angleFromTop(0), angleFromTop(normalEnd), false)
-	ctx.strokeStyle = 'rgba(255,255,255,0.12)'
 	ctx.stroke()
+	ctx.restore()
 
-	// Spiral connector (smooth transition inward at the boundary)
-	const steps = 16
-	ctx.beginPath()
-	for (let i = 0; i <= steps; i += 1) {
-		const t = i / steps
-		const frac = normalEnd + (t * (1.0 - normalEnd))
-		const radius = rOuter - (t * (rOuter - rInner))
-		const a = angleFromTop(frac)
-		const x = cx + Math.cos(a) * radius
-		const y = cy + Math.sin(a) * radius
-		if (i === 0) {
-			ctx.moveTo(x, y)
-		} else {
-			ctx.lineTo(x, y)
-		}
-	}
-	ctx.strokeStyle = 'rgba(255,255,255,0.12)'
-	ctx.stroke()
-
-	// Inner ring (overlap window = minute 11, first 10% of next hour)
-	const overlapArc = 0.1
-	ctx.beginPath()
-	ctx.arc(cx, cy, rInner, angleFromTop(0), angleFromTop(overlapArc), false)
-	ctx.strokeStyle = isInOverlap ? 'rgba(255,110,138,0.70)' : 'rgba(255,255,255,0.12)'
-	ctx.lineWidth = isInOverlap ? 3 : 2
-	ctx.stroke()
-
-	// Label for overlap segment (previous hour + minute 11)
+	// Label: show previous hour with (11)
 	const prevHour = ((hourIndex - 1 + HOURS_PER_DAY) % HOURS_PER_DAY) + 1
-	const labelA = angleFromTop(0.05)
-	const labelR = rInner - 14
+	const labelA = angleFromTop(overlapSpan * 0.5)
+	const labelR = rInner - 12
 	const labelX = cx + Math.cos(labelA) * labelR
 	const labelY = cy + Math.sin(labelA) * labelR
 
-	ctx.fillStyle = isInOverlap ? 'rgba(255,110,138,0.85)' : 'rgba(255,255,255,0.30)'
+	ctx.save()
+	ctx.fillStyle = isInOverlap ? 'rgba(255,110,138,0.90)' : 'rgba(255,255,255,0.35)'
 	ctx.textAlign = 'center'
 	ctx.textBaseline = 'middle'
 	const fontPx = Math.max(9, Math.floor(r * 0.042))
 	ctx.font = `600 ${fontPx}px ui-monospace, monospace`
-	
+
 	const hh = String(prevHour).padStart(2, '0')
 	ctx.fillText(`${hh}(11)`, labelX, labelY)
-
 	ctx.restore()
 }
 
@@ -233,7 +231,7 @@ export function renderAnalogueClock({ canvas, utcSecondsOfDay, showSeconds, show
 
 	const cx = sizePx / 2
 	const cy = sizePx / 2
-	const r = (sizePx / 2) - 20
+	const r = (sizePx / 2) - 54
 
 	const seconds = ((utcSecondsOfDay % SECONDS_PER_DAY) + SECONDS_PER_DAY) % SECONDS_PER_DAY
 	const dayFraction = seconds / SECONDS_PER_DAY
@@ -246,8 +244,8 @@ export function renderAnalogueClock({ canvas, utcSecondsOfDay, showSeconds, show
 	drawDayProgressArc(ctx, cx, cy, r, dayFraction)
 	drawOuterRing(ctx, cx, cy, r)
 	drawHourTicks(ctx, cx, cy, r)
-	drawHourNumbers(ctx, cx, cy, r)
-	drawSpiralMinuteTrack(ctx, cx, cy, r, showOverlap, parts.isOverlapWindow, parts.hourIndex, minuteFraction)
+	drawHourLabels(ctx, cx, cy, r)
+	drawOverlapInnerArc(ctx, cx, cy, r, showOverlap, parts.isOverlapWindow, parts.hourIndex)
 
 	// Draw hands (back to front for proper layering)
 	const hourAngle = angleFromTop(dayFraction)
