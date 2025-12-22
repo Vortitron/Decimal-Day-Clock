@@ -167,12 +167,26 @@ function renderDecimalTime({ nowUnixMs, settings }) {
 	setText(clockTimeEl, formattedMain)
 
 	clockTimeEl.classList.toggle('clock__time--small', mode === 'analogue')
+	clockAltEl.classList.toggle('clock__alt--small', mode === 'analogue')
 
 	const shouldShowAlt = Boolean(showOverlap && isOverlapWindow && altLabel)
-	setHidden(clockAltEl, !shouldShowAlt)
-	if (shouldShowAlt) {
-		const formattedAlt = formatDecimalLabelWithStyle(altLabel, formatStyle, { showHour, showMinute, showSeconds })
-		setText(clockAltEl, `overlap: ${formattedAlt}`)
+
+	// In analogue mode, keep the overlap line visible (if enabled) so users learn what it is,
+	// but only populate it with the alternate reading when the overlap window is active.
+	if (showOverlap && mode === 'analogue') {
+		setHidden(clockAltEl, false)
+		if (shouldShowAlt) {
+			const formattedAlt = formatDecimalLabelWithStyle(altLabel, formatStyle, { showHour, showMinute, showSeconds })
+			setText(clockAltEl, `overlap: ${formattedAlt}`)
+		} else {
+			setText(clockAltEl, 'overlap: none')
+		}
+	} else {
+		setHidden(clockAltEl, !shouldShowAlt)
+		if (shouldShowAlt) {
+			const formattedAlt = formatDecimalLabelWithStyle(altLabel, formatStyle, { showHour, showMinute, showSeconds })
+			setText(clockAltEl, `overlap: ${formattedAlt}`)
+		}
 	}
 
 	const now = new Date(nowUnixMs)
