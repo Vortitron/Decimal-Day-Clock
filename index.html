@@ -11,9 +11,9 @@
 	<body>
 		<main class="app" aria-label="Decimal Day Clock">
 			<section class="clock" aria-label="Current time">
+				<canvas class="clock__canvas" id="clock-canvas" hidden></canvas>
 				<div class="clock__time" id="clock-time">--:--:--</div>
 				<div class="clock__alt" id="clock-alt" hidden></div>
-				<canvas class="clock__canvas" id="clock-canvas" hidden></canvas>
 				<div class="clock__meta" id="clock-meta"></div>
 			</section>
 
@@ -24,8 +24,8 @@
 						<label class="field">
 							<span class="field__label">Format</span>
 							<select class="field__input" id="sel-format">
-								<option value="colon" selected>Colon: HH:MM(:SS)</option>
-								<option value="brackets">Brackets: HH(MM)SS</option>
+								<option value="colon">Colon: HH:MM(:SS)</option>
+								<option value="brackets" selected>Brackets: HH(MM)SS</option>
 							</select>
 						</label>
 						<label class="field">

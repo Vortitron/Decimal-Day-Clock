@@ -166,6 +166,8 @@ function renderDecimalTime({ nowUnixMs, settings }) {
 	const formattedMain = formatDecimalLabelWithStyle(mainLabel, formatStyle, { showHour, showMinute, showSeconds })
 	setText(clockTimeEl, formattedMain)
 
+	clockTimeEl.classList.toggle('clock__time--small', mode === 'analogue')
+
 	const shouldShowAlt = Boolean(showOverlap && isOverlapWindow && altLabel)
 	setHidden(clockAltEl, !shouldShowAlt)
 	if (shouldShowAlt) {
@@ -186,8 +188,8 @@ function renderDecimalTime({ nowUnixMs, settings }) {
 
 	const isAnalogue = mode === 'analogue'
 	setHidden(canvasEl, !isAnalogue)
-	setHidden(clockAltEl, isAnalogue ? true : !shouldShowAlt)
-	setHidden(clockTimeEl, isAnalogue)
+	setHidden(clockAltEl, !shouldShowAlt)
+	setHidden(clockTimeEl, false)
 
 	if (isAnalogue) {
 		try {

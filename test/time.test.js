@@ -3,6 +3,7 @@ import test from 'node:test'
 
 import {
 	getDecimalLabelsFromUtcSecondsOfDay,
+	formatDecimalLabelWithStyle,
 	solarNoonUtcSecondsOfDayFromLongitude,
 	unixMsToUtcSecondsOfDay,
 	wallTimeWithUtcOffsetToUnixMs,
@@ -65,6 +66,25 @@ test('wall time + UTC offset converts to correct UTC instant', () => {
 	})
 
 	assert.equal(new Date(unixMs).toISOString(), '2025-01-01T08:00:00.000Z')
+})
+
+test('bracket format supports HH(MM)SS, 46(), and (MM)SS', () => {
+	const label = { hour: 46, minute: 6, second: 8 }
+
+	assert.equal(
+		formatDecimalLabelWithStyle(label, 'brackets', { showHour: true, showMinute: true, showSeconds: true }),
+		'46(06)08'
+	)
+
+	assert.equal(
+		formatDecimalLabelWithStyle(label, 'brackets', { showHour: true, showMinute: false, showSeconds: false }),
+		'46()'
+	)
+
+	assert.equal(
+		formatDecimalLabelWithStyle(label, 'brackets', { showHour: false, showMinute: true, showSeconds: true }),
+		'(06)08'
+	)
 })
 
 

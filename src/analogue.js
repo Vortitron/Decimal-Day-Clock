@@ -49,16 +49,19 @@ function drawTicks(ctx, cx, cy, rOuter) {
 		const fraction = i / HOURS_PER_DAY
 		const a = angleFromTop(fraction)
 
-		const isMajor = (i % 8) === 0
-		const isMid = (i % 4) === 0
+		const hour = i + 1
+		const isMajor = (hour % 8) === 0 || hour === 1
+		const isMid = (hour % 4) === 0
 
-		const len = isMajor ? 16 : (isMid ? 11 : 7)
-		const rInner = rOuter - len
+		const insideLen = isMajor ? 18 : (isMid ? 12 : 7)
+		const outsideLen = isMajor ? 6 : 0
+		const rInner = rOuter - insideLen
+		const rOuter2 = rOuter + outsideLen
 
 		const x1 = cx + (Math.cos(a) * rInner)
 		const y1 = cy + (Math.sin(a) * rInner)
-		const x2 = cx + (Math.cos(a) * rOuter)
-		const y2 = cy + (Math.sin(a) * rOuter)
+		const x2 = cx + (Math.cos(a) * rOuter2)
+		const y2 = cy + (Math.sin(a) * rOuter2)
 
 		ctx.beginPath()
 		ctx.moveTo(x1, y1)
@@ -67,6 +70,48 @@ function drawTicks(ctx, cx, cy, rOuter) {
 		ctx.lineWidth = isMajor ? 3 : 2
 		ctx.stroke()
 	}
+	ctx.restore()
+}
+
+function drawDayArc(ctx, cx, cy, rOuter, fraction) {
+	ctx.save()
+	ctx.beginPath()
+	ctx.arc(cx, cy, rOuter + 2, angleFromTop(0), angleFromTop(fraction), false)
+	ctx.strokeStyle = 'rgba(110,231,255,0.55)'
+	ctx.lineWidth = 6
+	ctx.lineCap = 'round'
+	ctx.stroke()
+	ctx.restore()
+}
+
+function drawNumbers(ctx, cx, cy, rOuter) {
+	ctx.save()
+	ctx.fillStyle = 'rgba(255,255,255,0.70)'
+	ctx.textAlign = 'center'
+	ctx.textBaseline = 'middle'
+
+	const fontPx = Math.max(11, Math.floor(rOuter * 0.06))
+	ctx.font = `600 ${fontPx}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace`
+
+	// Label a sensible density: 1, then every 4 hours (4..96).
+	for (let hour = 1; hour <= HOURS_PER_DAY; hour += 1) {
+		if (hour !== 1 && (hour % 4) !== 0) {
+			continue
+		}
+
+		const i = hour - 1
+		const fraction = i / HOURS_PER_DAY
+		const a = angleFromTop(fraction)
+
+		const rText = rOuter - 30
+		const x = cx + (Math.cos(a) * rText)
+		const y = cy + (Math.sin(a) * rText)
+
+		const alpha = (hour % 8) === 0 || hour === 1 ? 0.78 : 0.55
+		ctx.fillStyle = `rgba(255,255,255,${alpha})`
+		ctx.fillText(String(hour), x, y)
+	}
+
 	ctx.restore()
 }
 
@@ -109,11 +154,14 @@ export function renderAnalogueClock({ canvas, utcSecondsOfDay, showSeconds }) {
 	const cy = sizePx / 2
 	const r = (sizePx / 2) - 18
 
-	drawRing(ctx, cx, cy, r)
-	drawTicks(ctx, cx, cy, r)
-
 	const seconds = ((utcSecondsOfDay % SECONDS_PER_DAY) + SECONDS_PER_DAY) % SECONDS_PER_DAY
 	const hourFraction = seconds / SECONDS_PER_DAY
+
+	drawDayArc(ctx, cx, cy, r, hourFraction)
+	drawRing(ctx, cx, cy, r)
+	drawTicks(ctx, cx, cy, r)
+	drawNumbers(ctx, cx, cy, r)
+
 	const hourAngle = angleFromTop(hourFraction)
 
 	const parts = getDecimalPartsFromUtcSecondsOfDay(seconds)
