@@ -136,7 +136,7 @@ function drawCentre(ctx, cx, cy) {
 	ctx.restore()
 }
 
-export function renderAnalogueClock({ canvas, utcSecondsOfDay, showSeconds }) {
+export function renderAnalogueClock({ canvas, utcSecondsOfDay, showSeconds, showOverlap }) {
 	assertCanvas(canvas)
 
 	const rect = canvas.getBoundingClientRect()
@@ -173,6 +173,10 @@ export function renderAnalogueClock({ canvas, utcSecondsOfDay, showSeconds }) {
 	const secondFraction = secondInMinute / SECONDS_PER_MINUTE
 	const secondAngle = angleFromTop(secondFraction)
 
+	if (showOverlap) {
+		drawMinuteOverlapGuide(ctx, cx, cy, r, parts.isOverlapWindow)
+	}
+
 	// Hour hand: one revolution per day, points at 96-hour dial.
 	drawHand(ctx, cx, cy, hourAngle, r * 0.62, 6, 'rgba(110,231,255,0.9)')
 
@@ -185,6 +189,46 @@ export function renderAnalogueClock({ canvas, utcSecondsOfDay, showSeconds }) {
 	}
 
 	drawCentre(ctx, cx, cy)
+}
+
+function drawMinuteOverlapGuide(ctx, cx, cy, rOuter, isInOverlapWindow) {
+	// Overlap only happens at the start of each hour, i.e. when the minute hand is near vertical.
+	// Visualise it as a “double track” segment for the first 90 seconds (10% of the 900s hour).
+
+	const rMinuteOuter = rOuter * 0.78
+	const rMinuteInner = rMinuteOuter - 10
+
+	// Subtle minute track (so the double-segment feels like it can “continue inside”)
+	ctx.save()
+	ctx.beginPath()
+	ctx.arc(cx, cy, rMinuteOuter, 0, TAU)
+	ctx.strokeStyle = 'rgba(255,255,255,0.06)'
+	ctx.lineWidth = 2
+	ctx.stroke()
+	ctx.restore()
+
+	const a1 = angleFromTop(0)
+	const a2 = angleFromTop(0.1) // first 90s of 900s
+
+	const baseColour = isInOverlapWindow ? 'rgba(255,110,138,0.55)' : 'rgba(255,255,255,0.18)'
+	const baseWidth = isInOverlapWindow ? 5 : 4
+
+	ctx.save()
+	ctx.strokeStyle = baseColour
+	ctx.lineWidth = baseWidth
+	ctx.lineCap = 'round'
+
+	// Outer segment
+	ctx.beginPath()
+	ctx.arc(cx, cy, rMinuteOuter, a1, a2, false)
+	ctx.stroke()
+
+	// Inner parallel segment (the “double line”)
+	ctx.beginPath()
+	ctx.arc(cx, cy, rMinuteInner, a1, a2, false)
+	ctx.stroke()
+
+	ctx.restore()
 }
 
 

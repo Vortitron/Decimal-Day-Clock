@@ -100,11 +100,6 @@ body {
 	font-size: clamp(18px, 2.2vw, 28px);
 }
 
-.clock__alt--small {
-	margin-top: 8px;
-	font-size: clamp(14px, 2.0vw, 22px);
-}
-
 .clock__meta {
 	margin-top: 14px;
 	color: var(--faint);
