@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en-GB">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="color-scheme" content="dark light">
+		<title>Decimal Day Clock</title>
+		<link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+		<link rel="stylesheet" href="./assets/styles.css">
+	</head>
+	<body>
+		<main class="app" aria-label="Decimal Day Clock">
+			<section class="clock" aria-label="Current time">
+				<div class="clock__time" id="clock-time">--:--:--</div>
+				<div class="clock__alt" id="clock-alt" hidden></div>
+				<div class="clock__meta" id="clock-meta"></div>
+			</section>
+
+			<section class="panel" aria-label="Options and converters">
+				<div class="panel__section">
+					<h2 class="panel__title">Display</h2>
+					<div class="panel__row">
+						<label class="switch">
+							<input type="checkbox" id="opt-show-seconds" checked>
+							<span>Show seconds</span>
+						</label>
+					</div>
+					<div class="panel__row">
+						<label class="switch">
+							<input type="checkbox" id="opt-show-overlap" checked>
+							<span>Show overlap reading (minute 11)</span>
+						</label>
+					</div>
+					<div class="panel__row">
+						<label class="switch">
+							<input type="checkbox" id="opt-prefer-crossover">
+							<span>Prefer crossover label during overlap</span>
+						</label>
+					</div>
+				</div>
+
+				<div class="panel__section">
+					<h2 class="panel__title">Midsun (solar noon)</h2>
+					<div class="panel__row">
+						<button type="button" class="btn" id="btn-use-location">Use my location</button>
+						<button type="button" class="btn btn--ghost" id="btn-clear-location">Clear</button>
+					</div>
+					<div class="panel__row panel__row--grid">
+						<label class="field">
+							<span class="field__label">Longitude (°)</span>
+							<input class="field__input" id="in-longitude" inputmode="decimal" autocomplete="off" placeholder="e.g. -0.1278" aria-describedby="longitude-help">
+						</label>
+						<div class="field field--readonly">
+							<span class="field__label">Midsun</span>
+							<output class="field__output" id="out-midsun">—</output>
+						</div>
+					</div>
+					<div class="panel__row">
+						<div class="hint" id="longitude-help">Approximate solar noon based on longitude only (no equation of time / latitude).</div>
+					</div>
+					<div class="panel__row">
+						<output class="status" id="out-location-status" aria-live="polite"></output>
+					</div>
+				</div>
+
+				<div class="panel__section">
+					<h2 class="panel__title">Converters</h2>
+
+					<div class="panel__subsection">
+						<h3 class="panel__subtitle">Unix time → decimal</h3>
+						<div class="panel__row panel__row--grid">
+							<label class="field">
+								<span class="field__label">Unix value</span>
+								<input class="field__input" id="in-unix" inputmode="numeric" autocomplete="off" placeholder="e.g. 1734768000">
+							</label>
+							<label class="field">
+								<span class="field__label">Unit</span>
+								<select class="field__input" id="sel-unix-unit">
+									<option value="s" selected>seconds</option>
+									<option value="ms">milliseconds</option>
+								</select>
+							</label>
+						</div>
+						<div class="panel__row">
+							<button type="button" class="btn" id="btn-convert-unix">Convert</button>
+							<button type="button" class="btn btn--ghost" id="btn-now-unix">Use now</button>
+						</div>
+						<div class="panel__row">
+							<output class="result" id="out-unix-result"></output>
+						</div>
+					</div>
+
+					<div class="panel__subsection">
+						<h3 class="panel__subtitle">Normal time (+ UTC offset) → decimal</h3>
+						<div class="panel__row panel__row--grid">
+							<label class="field">
+								<span class="field__label">Date</span>
+								<input class="field__input" id="in-date" type="date">
+							</label>
+							<label class="field">
+								<span class="field__label">Time</span>
+								<input class="field__input" id="in-time" inputmode="numeric" autocomplete="off" placeholder="HH:MM or HH:MM:SS">
+							</label>
+						</div>
+						<div class="panel__row panel__row--grid">
+							<label class="field">
+								<span class="field__label">UTC offset</span>
+								<select class="field__input" id="sel-offset"></select>
+							</label>
+							<div class="field field--readonly">
+								<span class="field__label">Decimal</span>
+								<output class="field__output" id="out-normal-decimal">—</output>
+							</div>
+						</div>
+						<div class="panel__row">
+							<button type="button" class="btn" id="btn-convert-normal">Convert</button>
+							<button type="button" class="btn btn--ghost" id="btn-now-normal">Use now (local)</button>
+						</div>
+						<div class="panel__row">
+							<output class="result" id="out-normal-result"></output>
+						</div>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<script type="module" src="./src/main.js"></script>
+	</body>
+</html>
+
+

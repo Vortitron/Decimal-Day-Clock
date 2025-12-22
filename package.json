@@ -1,0 +1,12 @@
+{
+	"name": "decimal-day-clock",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"test": "node --test"
+	}
+}
+
+
+
+

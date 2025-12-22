@@ -1,104 +1,97 @@
 # Decimal Day Clock
 
-A digital clock implementing a proposed metric/decimal time system that divides the day cleanly while keeping the second unchanged and eliminating single-point ambiguity at transitions.
+A fullscreen web clock implementing a proposed metric/decimal time system that divides the day cleanly while keeping the second unchanged and reducing single-point ambiguity at transitions.
 
-## Time System Specification
+This repository is a **static site** (no build step) designed to be hosted on **GitHub Pages**.
 
-### Core Divisions
+## What you get
+
+- **Fullscreen decimal clock**: `HH:MM(:SS)` where `HH` = 01–96, `MM` = 01–11, `SS` = 00–89.
+- **Overlap/crossover support**: optionally show the alternate reading during the overlap window.
+- **Midsun (solar noon) helper**: optional geolocation (or manual longitude) to show the *midsun point* in decimal time and the time delta to/from it.
+- **Converters**:
+  - Unix time (seconds or milliseconds) → decimal
+  - Conventional wall time + **UTC offset** → decimal (useful for “different timezones” without relying on IANA/DST rules)
+- **Unit tests** for the core conversion maths (`node --test`).
+
+## Time system specification (implemented)
+
+### Core divisions
 - The day is exactly **86,400 seconds** (unchanged from standard time).
 - The day is divided into **96 hours**.
-- Each hour = exactly **900 seconds** = 15 standard minutes.
-- Clocks display hours from **1 to 96**, then reset to 1 at the start of the next day.
+- Each hour is exactly **900 seconds** (= 15 standard minutes).
+- Hours display **1 to 96**, then wrap to 1 at the next day boundary.
 
-### Minutes
-- Each hour is divided into **10 normal minutes**.
-- Each minute = exactly **90 seconds**.
+### Minutes + seconds
+- Each hour has **10 normal minutes**.
+- Each minute is exactly **90 seconds**.
 - Minutes are numbered **1 to 10**.
+- Seconds are unchanged within the minute: **00–89**.
 
-### Crossover Minute (Overlap Mechanism)
-- After the 10th minute of an hour, there is one additional **crossover minute** labeled **11**.
-- The crossover minute (11) is physically identical to the 1st minute of the next hour.
-- Duration: 90 seconds (same as regular minutes).
-- Purpose: Eliminates sharp ambiguity at hour boundaries by spreading potential confusion over a 90-second window.
+### Crossover / overlap minute (11)
+- During the first **90 seconds of each hour**, the physical time interval can be labelled in two ways:
+  - **Current hour, minute 01**, or
+  - **Previous hour, minute 11** (the “crossover minute”)
+- This spreads the boundary over a window instead of a single instant.
 
-### Hour Transition Example
-Around the change from hour 47 to 48:
+Example around the change from hour 47 to 48:
 
-| Display       | Seconds into hour 47 | Equivalent |
-|---------------|----------------------|------------|
-| 47:09         | 720–809              |            |
-| 47:10         | 810–899              | End of normal hour 47 |
-| 47:11         | 900–989              | = 48:01 (first minute of hour 48) |
-| 48:01         | 900–989              | = 47:11 (crossover) |
-| 48:02         | 990–1079             |            |
+| Physical time interval | Primary label | Alternate label |
+|---|---:|---:|
+| last 90s of hour 47 | 47:10 | — |
+| first 90s of hour 48 | 48:01 | 47:11 |
+| next 90s of hour 48 | 48:02 | — |
 
-The clock advances from 47:11 directly to 48:01 (same physical time period, different labels).
+## Timezones and solar reference
 
-### Daily Reset
-- After 96:10 (end of normal hour 96), the clock shows 96:11 (crossover minute).
-- The next period is displayed as **1:01** (start of the new day).
-- The same 90-second crossover window exists at the day boundary.
+The main clock is **global** and based on **UTC** (everyone sees the same decimal time at the same instant).
 
-### Smaller Units (Optional)
-- Seconds: unchanged (0–89 per minute).
-- Decimal subdivisions can be added if desired:
-  - Deciminute = 9 seconds (10 per minute).
-  - But plain seconds are recommended for simplicity.
+The converters include a **UTC offset** option so you can interpret an input wall time as “UTC+02:00”, “UTC−05:00”, etc. (This does not apply DST rules; it is a fixed offset.)
 
-### Display Format
-Recommended digital format: `HH:MM:SS` where:
-- `HH` = 01–96 (leading zero optional)
-- `MM` = 01–11 (11 only during crossover)
-- `SS` = 00–89
+### Midsun (solar noon)
 
-Analogue clocks could use a 96-mark face with a minute hand that completes one revolution every 10 normal minutes (900 seconds).
+The “midsun” helper is an **approximation based on longitude only**:
+- Greenwich (0°) midsun is **12:00 UTC**
+- Shifts by **4 standard minutes per 1° longitude**
+  - east (+): earlier
+  - west (−): later
 
-## Timezones and Solar Reference
+Notes:
+- This intentionally does **not** include the equation of time, latitude, or atmospheric refraction.
 
-This clock implements a **single global time** system: everyone worldwide uses the same clock numbers (1–96 hours) at the same instant, based directly on UTC (Coordinated Universal Time) with no offsets applied.
+## Run it locally
 
-### Rationale
-- Eliminates all timezone conversion complexity.
-- Perfectly suits a connected world where international scheduling, broadcasts, and software timestamps should be effortless.
-- Complements the rational, metric structure of the 96-hour day.
+- Open `index.html` directly in your browser, or
+- Serve the folder with any static server (recommended for module loading), for example:
 
-Traditional timezones are not used. Local clocks do not adjust for longitude or daylight saving.
+```bash
+python3 -m http.server 8000
+```
 
-### Local Solar Reference (Optional Feature)
-The main clock remains pure global time, but the app can provide **local solar context** to help users align with natural daylight:
+Then visit `http://localhost:8000`.
 
-- Uses device GPS (or manual longitude input) to calculate approximate solar times for the user's location.
-- Key references (adjusted for longitude, date, and latitude where needed):
-  - **Local Solar Noon**: When the sun is highest (directly south/north).
-    - Base: ~48:00 at Greenwich (0° longitude).
-    - Shifts by **4 hours** per 15° longitude (east: earlier, west: later).
-  - **Equatorial Sunrise/Sunset**: Clean baseline assuming 12-hour days at the equator.
-    - Sunrise ≈ 12 hours before solar noon.
-    - Sunset ≈ 12 hours after solar noon.
-- More accurate calculations can include the equation of time and latitude effects for real sunrise/sunset.
+## Deploy to GitHub Pages
 
+This repo is already laid out for **Pages from the repository root**:
 
-## Features to Implement
+- GitHub → **Settings** → **Pages**
+- **Source**: “Deploy from a branch”
+- **Branch**: `main` / `/ (root)`
 
-- Real-time clock displaying current time in the new system.
-- Accurate conversion from standard Unix/UTC time to 96-hour format.
-- Smooth handling of crossover minutes (display both possible readings optionally during overlap?).
-- Configurable display options:
-  - Show seconds
-  - 24-hour vs 12-hour style not needed (always 1–96)
-  - Highlight crossover minute differently
-- Support for multiple time zones (offset applied before conversion).
+After it deploys, your site is served over HTTPS (important: browsers typically require **HTTPS** for geolocation).
 
-## Why This System?
-- Perfect integer division of the day: 86400 ÷ 96 ÷ 10 ÷ 90 = exact.
-- Mostly decimal structure (10 minutes per hour).
-- No fractional seconds.
-- Overlap mechanism removes ambiguous reset points at both hour and day levels.
-- Cleaner and more rational than the traditional 24×60×60 system.
+## Tests
+
+```bash
+npm test
+```
+
+## Privacy
+
+- Clicking **“Use my location”** uses browser geolocation to read your coordinates.
+- The app stores only your **longitude** and display options in **localStorage** (in your browser).
+- No data is sent to any server by this project.
 
 ## License
-MIT (or choose your preferred license)
 
----
-
-Happy building! This clock will be a great demonstration of a practical decimal time reform.
+MIT (see `LICENSE`).
