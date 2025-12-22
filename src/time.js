@@ -1,9 +1,9 @@
 const SECONDS_PER_DAY = 86_400
-const MS_PER_DAY = 86_400_000
 const SECONDS_PER_HOUR = 900
-const SECONDS_PER_MINUTE = 90
+const SECONDS_PER_MINUTE = 100
 const HOURS_PER_DAY = 96
-const CROSSOVER_MINUTE = 11
+const MINUTES_PER_HOUR = 9 // 0-8 are normal, 9 is crossover
+const CROSSOVER_MINUTE = 9
 const SECONDS_PER_LONGITUDE_DEGREE = 240 // 4 standard minutes
 const SOLAR_NOON_UTC_SECONDS_AT_GREENWICH = 43_200 // 12:00:00 UTC
 
@@ -39,8 +39,8 @@ export function getDecimalPartsFromUtcSecondsOfDay(utcSecondsOfDay) {
 	const secondsIntoHour = seconds - (hourIndex * SECONDS_PER_HOUR) // 0..899.999
 
 	const secondWhole = Math.floor(secondsIntoHour) // 0..899
-	const minuteIndex = Math.floor(secondWhole / SECONDS_PER_MINUTE) // 0..9
-	const secondInMinute = secondWhole - (minuteIndex * SECONDS_PER_MINUTE) // 0..89
+	const minuteIndex = Math.floor(secondWhole / SECONDS_PER_MINUTE) // 0..8
+	const secondInMinute = secondWhole - (minuteIndex * SECONDS_PER_MINUTE) // 0..99
 
 	const isOverlapWindow = secondWhole < SECONDS_PER_MINUTE
 
@@ -57,8 +57,8 @@ export function getDecimalPartsFromUtcSecondsOfDay(utcSecondsOfDay) {
 export function getDecimalLabelsFromUtcSecondsOfDay(utcSecondsOfDay) {
 	const parts = getDecimalPartsFromUtcSecondsOfDay(utcSecondsOfDay)
 
-	const hour = parts.hourIndex + 1
-	const minute = parts.minuteIndex + 1
+	const hour = parts.hourIndex
+	const minute = parts.minuteIndex
 	const second = parts.secondInMinute
 
 	const primary = { hour, minute, second }
@@ -68,7 +68,7 @@ export function getDecimalLabelsFromUtcSecondsOfDay(utcSecondsOfDay) {
 	}
 
 	const altHourIndex = mod(parts.hourIndex - 1, HOURS_PER_DAY)
-	const alternate = { hour: altHourIndex + 1, minute: CROSSOVER_MINUTE, second }
+	const alternate = { hour: altHourIndex, minute: CROSSOVER_MINUTE, second }
 
 	return { primary, alternate, isOverlapWindow: true }
 }
@@ -89,32 +89,6 @@ export function unixMsToUtcSecondsOfDay(unixMs) {
 export function unixMsToUtcSecondsOfDayPrecise(unixMs) {
 	assertFiniteNumber(unixMs, 'unixMs')
 	return mod(unixMs / 1000, SECONDS_PER_DAY)
-}
-
-export function getTenDayWeekDateFromUnixMs(unixMs) {
-	assertFiniteNumber(unixMs, 'unixMs')
-
-	const d = new Date(unixMs)
-	const year = d.getUTCFullYear()
-	const monthIndex = d.getUTCMonth()
-	const dayOfMonth = d.getUTCDate()
-
-	const utcMidnightMs = Date.UTC(year, monthIndex, dayOfMonth)
-	const yearStartMs = Date.UTC(year, 0, 1)
-	const dayOfYear = Math.floor((utcMidnightMs - yearStartMs) / MS_PER_DAY) + 1
-
-	const yearLengthDays = Math.floor((Date.UTC(year + 1, 0, 1) - yearStartMs) / MS_PER_DAY)
-
-	const week = Math.floor((dayOfYear - 1) / 10) + 1
-	const day = ((dayOfYear - 1) % 10) + 1
-
-	return {
-		year,
-		week,
-		day,
-		dayOfYear,
-		yearLengthDays,
-	}
 }
 
 export function parseLongitudeDegrees(raw) {
@@ -263,20 +237,21 @@ function formatColon({ hour, minute, second }, { showHour, showMinute, showSecon
 		return pad2(hour)
 	}
 
+	// Minutes are 0-9, single digit (no leading zero)
 	if (showHour && showMinute && showSeconds) {
-		return `${pad2(hour)}:${pad2(minute)}:${pad2(second)}`
+		return `${pad2(hour)}:${minute}:${pad2(second)}`
 	}
 	if (showHour && showMinute && !showSeconds) {
-		return `${pad2(hour)}:${pad2(minute)}`
+		return `${pad2(hour)}:${minute}`
 	}
 	if (showHour && !showMinute) {
 		return pad2(hour)
 	}
 	if (!showHour && showMinute && showSeconds) {
-		return `${pad2(minute)}:${pad2(second)}`
+		return `${minute}:${pad2(second)}`
 	}
 	if (!showHour && showMinute && !showSeconds) {
-		return pad2(minute)
+		return String(minute)
 	}
 
 	return pad2(hour)
@@ -284,10 +259,10 @@ function formatColon({ hour, minute, second }, { showHour, showMinute, showSecon
 
 function formatBrackets({ hour, minute, second }, { showHour, showMinute, showSeconds }) {
 	const hourStr = showHour ? pad2(hour) : ''
-	const minuteStr = showMinute ? pad2(minute) : ''
+	const minuteStr = showMinute ? String(minute) : '' // Single digit 0-9
 	const secondsStr = showSeconds ? pad2(second) : ''
 
-	// Always show brackets as the minute “slot”, even if minute is hidden.
+	// Always show brackets as the minute "slot", even if minute is hidden.
 	if (showSeconds) {
 		return `${hourStr}(${minuteStr})${secondsStr}`
 	}
@@ -307,4 +282,25 @@ export function formatDecimalLabelWithStyle(label, style, opts) {
 	return formatColon(label, safeOpts)
 }
 
+export function getTenDayWeekDateFromUnixMs(unixMs) {
+	assertFiniteNumber(unixMs, 'unixMs')
 
+	const d = new Date(unixMs)
+	const year = d.getUTCFullYear()
+	const startOfYear = Date.UTC(year, 0, 1)
+	const dayOfYear = Math.floor((unixMs - startOfYear) / 86_400_000)
+
+	const weekNumber = Math.floor(dayOfYear / 10)
+	const dayInWeek = dayOfYear % 10
+
+	return {
+		year,
+		week: weekNumber,
+		day: dayInWeek,
+	}
+}
+
+export function formatTenDayWeekDate({ year, week, day }) {
+	const ww = String(week).padStart(2, '0')
+	return `${year}(${ww}.${day})`
+}

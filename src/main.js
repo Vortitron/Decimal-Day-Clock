@@ -1,6 +1,7 @@
 import {
 	formatSignedTimeDeltaSeconds,
 	formatDecimalLabelWithStyle,
+	formatTenDayWeekDate,
 	getDecimalLabelsFromUtcSecondsOfDay,
 	getTenDayWeekDateFromUnixMs,
 	parseLongitudeDegrees,
@@ -180,9 +181,9 @@ function renderDecimalTime({ nowUnixMs, settings }) {
 	const utcDate = now.toISOString().slice(0, 10)
 	const utcTime = now.toISOString().slice(11, 19)
 	const unixSeconds = Math.floor(nowUnixMs / 1000)
-	const overlapNote = isOverlapWindow ? 'Overlap: minute 11 available.' : ''
+	const overlapNote = isOverlapWindow ? 'Overlap: minute 9 available.' : ''
 	const decDate = getTenDayWeekDateFromUnixMs(nowUnixMs)
-	const decDateStr = `${decDate.year} W${String(decDate.week).padStart(2, '0')} D${String(decDate.day).padStart(2, '0')}`
+	const decDateStr = formatTenDayWeekDate(decDate)
 	const line1 = `Date ${decDateStr}`
 	const metaParts = [`UTC ${utcDate} ${utcTime}Z`, `Unix ${unixSeconds}`]
 	if (overlapNote) {

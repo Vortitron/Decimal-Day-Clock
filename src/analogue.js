@@ -4,8 +4,8 @@ const TAU = Math.PI * 2
 const HOURS_PER_DAY = 96
 const SECONDS_PER_DAY = 86_400
 const SECONDS_PER_HOUR = 900
-const SECONDS_PER_MINUTE = 90
-const MINUTES_PER_HOUR = 10
+const SECONDS_PER_MINUTE = 100
+const MINUTES_PER_HOUR = 9 // 0-8 are normal, 9 is crossover
 
 function assertCanvas(canvas) {
 	if (!(canvas instanceof HTMLCanvasElement)) {
@@ -47,7 +47,7 @@ function drawOuterRing(ctx, cx, cy, r) {
 function drawHourTicks(ctx, cx, cy, rOuter) {
 	ctx.save()
 	for (let i = 0; i < HOURS_PER_DAY; i += 1) {
-		const hour = i + 1
+		const hour = i // 0-95
 		const fraction = i / HOURS_PER_DAY
 		const a = angleFromTop(fraction)
 
@@ -92,9 +92,9 @@ function drawHourLabels(ctx, cx, cy, rOuter) {
 	ctx.font = `600 ${fontPx}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace`
 
 	// Label every 4 hours: hour number above the line, (minute range) below
-	for (let hour = 4; hour <= HOURS_PER_DAY; hour += 4) {
-		const i = hour - 1
-		const fraction = i / HOURS_PER_DAY
+	// Hours are 0-95, so label 0, 4, 8, 12, ..., 92
+	for (let hour = 0; hour < HOURS_PER_DAY; hour += 4) {
+		const fraction = hour / HOURS_PER_DAY
 		const a = angleFromTop(fraction)
 
 		const cos = Math.cos(a)
@@ -111,9 +111,8 @@ function drawHourLabels(ctx, cx, cy, rOuter) {
 		ctx.fillText(String(hour), xHour, yHour)
 
 		// Minute range in brackets: below the hour number (further out)
-		const minuteStart = 1
-		const minuteEnd = MINUTES_PER_HOUR
-		const minuteLabel = `(${minuteStart}-${minuteEnd})`
+		// Minutes are 0-8 normally, 9 is crossover
+		const minuteLabel = `(0-${MINUTES_PER_HOUR - 1})`
 
 		const rMinute = rOuter + 28
 		const xMinute = cx + (cos * rMinute)
@@ -148,9 +147,10 @@ function drawOverlapInnerArc(ctx, cx, cy, r, showOverlap, isInOverlap, hourIndex
 	}
 
 	// Small inner arc at the top (0° position) showing the overlap window.
-	// This represents minute 11 (the crossover minute).
+	// This represents minute 9 (the crossover minute).
+	// It spans the first 100 seconds (0-99) of the current hour, which is also minute 9 of the previous hour.
 	const rInner = r * 0.75
-	const overlapSpan = 0.1 // 10% of circle (90s of 900s)
+	const overlapSpan = SECONDS_PER_MINUTE / SECONDS_PER_HOUR // 100/900 ≈ 0.111
 
 	const a1 = angleFromTop(0)
 	const a2 = angleFromTop(overlapSpan)
@@ -164,8 +164,8 @@ function drawOverlapInnerArc(ctx, cx, cy, r, showOverlap, isInOverlap, hourIndex
 	ctx.stroke()
 	ctx.restore()
 
-	// Label: show previous hour with (11)
-	const prevHour = ((hourIndex - 1 + HOURS_PER_DAY) % HOURS_PER_DAY) + 1
+	// Label: show previous hour with (9)
+	const prevHour = (hourIndex - 1 + HOURS_PER_DAY) % HOURS_PER_DAY
 	const labelA = angleFromTop(overlapSpan * 0.5)
 	const labelR = rInner - 12
 	const labelX = cx + Math.cos(labelA) * labelR
@@ -179,7 +179,7 @@ function drawOverlapInnerArc(ctx, cx, cy, r, showOverlap, isInOverlap, hourIndex
 	ctx.font = `600 ${fontPx}px ui-monospace, monospace`
 
 	const hh = String(prevHour).padStart(2, '0')
-	ctx.fillText(`${hh}(11)`, labelX, labelY)
+	ctx.fillText(`${hh}(9)`, labelX, labelY)
 	ctx.restore()
 }
 
@@ -255,10 +255,10 @@ export function renderAnalogueClock({ canvas, utcSecondsOfDay, showSeconds, show
 	// Hour hand (one revolution per day = 96 hours)
 	drawHand(ctx, cx, cy, hourAngle, r * 0.48, 6, 'rgba(110,231,255,0.95)', r * 0.10)
 
-	// Minute hand (one revolution per hour = 10 minutes)
+	// Minute hand (one revolution per hour = 9 minutes + crossover)
 	drawHand(ctx, cx, cy, minuteAngle, r * 0.72, 4, 'rgba(255,255,255,0.85)', r * 0.12)
 
-	// Second hand (one revolution per minute = 90 seconds)
+	// Second hand (one revolution per minute = 100 seconds)
 	if (showSeconds) {
 		drawHand(ctx, cx, cy, secondAngle, r * 0.82, 2, 'rgba(255,110,138,0.90)', 0)
 	}
