@@ -412,6 +412,11 @@ function wireSettingsPersistence() {
 			longitude: typeof longitude === 'number' ? longitude : null,
 		}
 		safeWriteSettings(stored)
+
+		// Trigger immediate re-render when settings change
+		const nowUnixMs = Date.now()
+		renderDecimalTime({ nowUnixMs, settings })
+		renderMidsun({ nowUnixMs })
 	}
 
 	$('opt-show-seconds').addEventListener('change', save)

@@ -141,26 +141,27 @@ function drawMinuteTicks(ctx, cx, cy, rOuter) {
 }
 
 function drawMinuteLabels(ctx, cx, cy, rOuter) {
-	// Draw minute numbers (0-9) inside the ring at every 4th hour for readability
+	// Draw minute numbers (0-9) inside the ring at key hour positions only
 	ctx.save()
 	ctx.textAlign = 'center'
 	ctx.textBaseline = 'middle'
 
-	const fontPx = Math.max(8, Math.floor(rOuter * 0.042))
-	ctx.font = `500 ${fontPx}px ui-monospace, monospace`
+	const fontPx = Math.max(9, Math.floor(rOuter * 0.048))
+	ctx.font = `600 ${fontPx}px ui-monospace, monospace`
 
-	// Label minutes for every 4th hour to avoid clutter
-	for (let hour = 0; hour < HOURS_PER_DAY; hour += 4) {
+	// Only show minute labels at these key hours: 0, 24, 48, 72 (every 24 hours = 4 positions)
+	const keyHours = [0, 24, 48, 72]
+
+	for (const hour of keyHours) {
 		for (let minute = 0; minute < 10; minute += 1) {
 			const fraction = (hour + (minute / 10)) / HOURS_PER_DAY
 			const a = angleFromTop(fraction)
 
-			const rLabel = rOuter - 18
+			const rLabel = rOuter - 22
 			const x = cx + (Math.cos(a) * rLabel)
 			const y = cy + (Math.sin(a) * rLabel)
 
-			// Use different alpha for minute 0 (aligns with hour) vs others
-			const alpha = minute === 0 ? 0.30 : 0.22
+			const alpha = minute === 0 ? 0.40 : 0.28
 			ctx.fillStyle = `rgba(255,255,255,${alpha})`
 			ctx.fillText(String(minute), x, y)
 		}
