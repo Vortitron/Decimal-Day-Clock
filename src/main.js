@@ -105,17 +105,16 @@ function getClockSettings() {
 	const mode = $('sel-mode').value
 
 	// Guardrails:
-	// - If seconds are shown, minute should be shown (otherwise the output is confusing).
-	// - If both hour and minute are hidden, force hour.
-	const effectiveShowMinute = showSeconds ? true : showMinute
-	const effectiveShowHour = (!showHour && !effectiveShowMinute) ? true : showHour
+	// - If both hour and minute are hidden AND seconds are hidden, force hour.
+	//   (If seconds are shown, `HH()SS` is allowed in bracket format.)
+	const effectiveShowHour = (!showHour && !showMinute && !showSeconds) ? true : showHour
 
 	return {
 		showSeconds,
 		showOverlap,
 		preferCrossover,
 		showHour: effectiveShowHour,
-		showMinute: effectiveShowMinute,
+		showMinute,
 		formatStyle: (formatStyle === 'brackets') ? 'brackets' : 'colon',
 		mode: (mode === 'analogue') ? 'analogue' : 'digital',
 	}

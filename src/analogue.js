@@ -5,7 +5,7 @@ const HOURS_PER_DAY = 96
 const SECONDS_PER_DAY = 86_400
 const SECONDS_PER_HOUR = 900
 const SECONDS_PER_MINUTE = 100
-const MINUTES_PER_HOUR = 9 // 0-8 are normal, 9 is crossover
+const MINUTES_PER_HOUR = 10 // 0-9 (minute 9 is the crossover)
 
 function assertCanvas(canvas) {
 	if (!(canvas instanceof HTMLCanvasElement)) {
@@ -111,60 +111,56 @@ function drawHourLabels(ctx, cx, cy, rOuter) {
 }
 
 function drawMinuteTicks(ctx, cx, cy, rOuter) {
-	// Draw minute tick marks INSIDE the hour ring
-	// Each hour has 9 minute ticks (for minutes 1-9; minute 0 aligns with hour tick)
+	// Draw a minute dial INSIDE the hour ring.
+	// Minutes are 0–9 and the minute hand makes one full revolution per hour,
+	// so the minute scale is a 10-division ring around the full circle.
 	ctx.save()
 
-	const rInner = rOuter - 8
-	const rTickStart = rInner - 5
+	const rDial = rOuter - 14
+	const tickLenMajor = 10
+	const tickLenMinor = 6
 
-	for (let hour = 0; hour < HOURS_PER_DAY; hour += 1) {
-		for (let minute = 1; minute < 10; minute += 1) {
-			const fraction = (hour + (minute / 10)) / HOURS_PER_DAY
-			const a = angleFromTop(fraction)
+	for (let minute = 0; minute < MINUTES_PER_HOUR; minute += 1) {
+		const isMajor = minute === 0
+		const a = angleFromTop(minute / MINUTES_PER_HOUR)
 
-			const x1 = cx + (Math.cos(a) * rTickStart)
-			const y1 = cy + (Math.sin(a) * rTickStart)
-			const x2 = cx + (Math.cos(a) * rInner)
-			const y2 = cy + (Math.sin(a) * rInner)
+		const len = isMajor ? tickLenMajor : tickLenMinor
+		const rInner = rDial - len
 
-			ctx.beginPath()
-			ctx.moveTo(x1, y1)
-			ctx.lineTo(x2, y2)
-			ctx.strokeStyle = 'rgba(255,255,255,0.08)'
-			ctx.lineWidth = 1
-			ctx.stroke()
-		}
+		const x1 = cx + (Math.cos(a) * rInner)
+		const y1 = cy + (Math.sin(a) * rInner)
+		const x2 = cx + (Math.cos(a) * rDial)
+		const y2 = cy + (Math.sin(a) * rDial)
+
+		ctx.beginPath()
+		ctx.moveTo(x1, y1)
+		ctx.lineTo(x2, y2)
+		ctx.strokeStyle = isMajor ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.12)'
+		ctx.lineWidth = isMajor ? 2 : 1.5
+		ctx.stroke()
 	}
 
 	ctx.restore()
 }
 
 function drawMinuteLabels(ctx, cx, cy, rOuter) {
-	// Draw minute numbers (0-9) inside the ring at key hour positions only
+	// Draw minute numbers (0–9) around the full-circle minute dial.
 	ctx.save()
 	ctx.textAlign = 'center'
 	ctx.textBaseline = 'middle'
 
-	const fontPx = Math.max(9, Math.floor(rOuter * 0.048))
-	ctx.font = `600 ${fontPx}px ui-monospace, monospace`
+	const rLabel = rOuter - 30
+	const fontPx = Math.max(10, Math.floor(rOuter * 0.050))
+	ctx.font = `600 ${fontPx}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace`
 
-	// Only show minute labels at these key hours: 0, 24, 48, 72 (every 24 hours = 4 positions)
-	const keyHours = [0, 24, 48, 72]
+	for (let minute = 0; minute < MINUTES_PER_HOUR; minute += 1) {
+		const a = angleFromTop(minute / MINUTES_PER_HOUR)
+		const x = cx + (Math.cos(a) * rLabel)
+		const y = cy + (Math.sin(a) * rLabel)
 
-	for (const hour of keyHours) {
-		for (let minute = 0; minute < 10; minute += 1) {
-			const fraction = (hour + (minute / 10)) / HOURS_PER_DAY
-			const a = angleFromTop(fraction)
-
-			const rLabel = rOuter - 22
-			const x = cx + (Math.cos(a) * rLabel)
-			const y = cy + (Math.sin(a) * rLabel)
-
-			const alpha = minute === 0 ? 0.40 : 0.28
-			ctx.fillStyle = `rgba(255,255,255,${alpha})`
-			ctx.fillText(String(minute), x, y)
-		}
+		const alpha = minute === 0 ? 0.45 : 0.28
+		ctx.fillStyle = `rgba(255,255,255,${alpha})`
+		ctx.fillText(String(minute), x, y)
 	}
 
 	ctx.restore()
