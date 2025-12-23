@@ -174,14 +174,14 @@ function renderDecimalTime({ nowUnixMs, settings }) {
 	setHidden(clockAltEl, !shouldShowAlt)
 	if (shouldShowAlt) {
 		const formattedAlt = formatDecimalLabelWithStyle(altLabel, formatStyle, { showHour, showMinute, showSeconds })
-		setText(clockAltEl, `overlap: ${formattedAlt}`)
+		setText(clockAltEl, `◐ ${formattedAlt}`)
 	}
 
 	const now = new Date(nowUnixMs)
 	const utcDate = now.toISOString().slice(0, 10)
 	const utcTime = now.toISOString().slice(11, 19)
 	const unixSeconds = Math.floor(nowUnixMs / 1000)
-	const overlapNote = isOverlapWindow ? 'Overlap: minute 9 available.' : ''
+	const overlapNote = isOverlapWindow ? '◐ minute 9' : ''
 	const decDate = getTenDayWeekDateFromUnixMs(nowUnixMs)
 	const decDateStr = formatTenDayWeekDate(decDate)
 	const line1 = `Date ${decDateStr}`

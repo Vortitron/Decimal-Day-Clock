@@ -87,44 +87,54 @@ function drawHourTicks(ctx, cx, cy, rOuter) {
 function drawHourLabels(ctx, cx, cy, rOuter) {
 	ctx.save()
 	ctx.textAlign = 'center'
+	ctx.textBaseline = 'middle'
 
 	const fontPx = Math.max(11, Math.floor(rOuter * 0.058))
 	ctx.font = `600 ${fontPx}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace`
 
-	// Label every 4 hours: hour number above the line, (minute range) below
+	// Label every 4 hours: just the hour number, outside the ring
 	// Hours are 0-95, so label 0, 4, 8, 12, ..., 92
 	for (let hour = 0; hour < HOURS_PER_DAY; hour += 4) {
 		const fraction = hour / HOURS_PER_DAY
 		const a = angleFromTop(fraction)
 
-		const cos = Math.cos(a)
-		const sin = Math.sin(a)
-
-		// Hour number: above the tick line (outside)
-		const rHour = rOuter + 16
-		const xHour = cx + (cos * rHour)
-		const yHour = cy + (sin * rHour)
+		const rHour = rOuter + 18
+		const xHour = cx + (Math.cos(a) * rHour)
+		const yHour = cy + (Math.sin(a) * rHour)
 
 		const alpha = (hour % 8) === 0 ? 0.70 : 0.45
 		ctx.fillStyle = `rgba(255,255,255,${alpha})`
-		ctx.textBaseline = 'middle'
 		ctx.fillText(String(hour), xHour, yHour)
+	}
 
-		// Minute range in brackets: below the hour number (further out)
-		// Minutes are 0-8 normally, 9 is crossover
-		const minuteLabel = `(0-${MINUTES_PER_HOUR - 1})`
+	ctx.restore()
+}
 
-		const rMinute = rOuter + 28
-		const xMinute = cx + (cos * rMinute)
-		const yMinute = cy + (sin * rMinute)
+function drawMinuteTicks(ctx, cx, cy, rOuter) {
+	// Draw minute tick marks INSIDE the hour ring
+	// Each hour has 9 minute ticks (for minutes 1-9; minute 0 aligns with hour tick)
+	ctx.save()
 
-		const fontPxSmall = Math.max(8, Math.floor(rOuter * 0.038))
-		ctx.font = `500 ${fontPxSmall}px ui-monospace, monospace`
-		ctx.fillStyle = `rgba(255,255,255,${alpha * 0.6})`
-		ctx.fillText(minuteLabel, xMinute, yMinute)
+	const rInner = rOuter - 8
+	const rTickStart = rInner - 5
 
-		// Restore font for next hour
-		ctx.font = `600 ${fontPx}px ui-monospace, monospace`
+	for (let hour = 0; hour < HOURS_PER_DAY; hour += 1) {
+		for (let minute = 1; minute < 10; minute += 1) {
+			const fraction = (hour + (minute / 10)) / HOURS_PER_DAY
+			const a = angleFromTop(fraction)
+
+			const x1 = cx + (Math.cos(a) * rTickStart)
+			const y1 = cy + (Math.sin(a) * rTickStart)
+			const x2 = cx + (Math.cos(a) * rInner)
+			const y2 = cy + (Math.sin(a) * rInner)
+
+			ctx.beginPath()
+			ctx.moveTo(x1, y1)
+			ctx.lineTo(x2, y2)
+			ctx.strokeStyle = 'rgba(255,255,255,0.08)'
+			ctx.lineWidth = 1
+			ctx.stroke()
+		}
 	}
 
 	ctx.restore()
@@ -244,6 +254,7 @@ export function renderAnalogueClock({ canvas, utcSecondsOfDay, showSeconds, show
 	drawDayProgressArc(ctx, cx, cy, r, dayFraction)
 	drawOuterRing(ctx, cx, cy, r)
 	drawHourTicks(ctx, cx, cy, r)
+	drawMinuteTicks(ctx, cx, cy, r)
 	drawHourLabels(ctx, cx, cy, r)
 	drawOverlapInnerArc(ctx, cx, cy, r, showOverlap, parts.isOverlapWindow, parts.hourIndex)
 
