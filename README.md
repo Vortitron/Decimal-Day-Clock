@@ -11,7 +11,7 @@ This repository is a **static site** (no build step) designed to be hosted on **
   - **Brackets**: `HH(M)SS` (minute is always in brackets, single digit 0–9)
   - Examples: `74(8)01`, `46()`, `(6)08`
 - **Overlap/crossover support**: optionally show the alternate reading during the overlap window (indicated by ◐ symbol).
-- **Analogue mode**: 96-hour dial with hands for day-progress (hour), minute-in-hour, and optional seconds.
+- **Analogue mode**: 96-hour dial with hands for day-progress (hour), minute-in-hour, and optional seconds. Minute labels (0-9) can be toggled on/off inside the ring.
 - **Midsun (solar noon) helper**: optional geolocation (or manual longitude) to show the *midsun point* in decimal time and the time delta to/from it.
 - **Converters**:
   - Unix time (seconds or milliseconds) → decimal

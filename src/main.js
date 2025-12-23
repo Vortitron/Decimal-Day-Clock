@@ -198,7 +198,7 @@ function renderDecimalTime({ nowUnixMs, settings }) {
 
 	if (isAnalogue) {
 		try {
-			renderAnalogueClock({ canvas: canvasEl, utcSecondsOfDay: utcSecondsOfDayPrecise, showSeconds, showOverlap })
+			renderAnalogueClock({ canvas: canvasEl, utcSecondsOfDay: utcSecondsOfDayPrecise, showSeconds, showOverlap, showMinute })
 		} catch (err) {
 			logError('Analogue render failed', err)
 		}

@@ -140,6 +140,35 @@ function drawMinuteTicks(ctx, cx, cy, rOuter) {
 	ctx.restore()
 }
 
+function drawMinuteLabels(ctx, cx, cy, rOuter) {
+	// Draw minute numbers (0-9) inside the ring at every 4th hour for readability
+	ctx.save()
+	ctx.textAlign = 'center'
+	ctx.textBaseline = 'middle'
+
+	const fontPx = Math.max(8, Math.floor(rOuter * 0.042))
+	ctx.font = `500 ${fontPx}px ui-monospace, monospace`
+
+	// Label minutes for every 4th hour to avoid clutter
+	for (let hour = 0; hour < HOURS_PER_DAY; hour += 4) {
+		for (let minute = 0; minute < 10; minute += 1) {
+			const fraction = (hour + (minute / 10)) / HOURS_PER_DAY
+			const a = angleFromTop(fraction)
+
+			const rLabel = rOuter - 18
+			const x = cx + (Math.cos(a) * rLabel)
+			const y = cy + (Math.sin(a) * rLabel)
+
+			// Use different alpha for minute 0 (aligns with hour) vs others
+			const alpha = minute === 0 ? 0.30 : 0.22
+			ctx.fillStyle = `rgba(255,255,255,${alpha})`
+			ctx.fillText(String(minute), x, y)
+		}
+	}
+
+	ctx.restore()
+}
+
 function drawDayProgressArc(ctx, cx, cy, rOuter, dayFraction) {
 	ctx.save()
 	ctx.beginPath()
@@ -225,7 +254,7 @@ function drawCentreDot(ctx, cx, cy, radius) {
 	ctx.restore()
 }
 
-export function renderAnalogueClock({ canvas, utcSecondsOfDay, showSeconds, showOverlap }) {
+export function renderAnalogueClock({ canvas, utcSecondsOfDay, showSeconds, showOverlap, showMinute }) {
 	assertCanvas(canvas)
 
 	const rect = canvas.getBoundingClientRect()
@@ -256,6 +285,9 @@ export function renderAnalogueClock({ canvas, utcSecondsOfDay, showSeconds, show
 	drawHourTicks(ctx, cx, cy, r)
 	drawMinuteTicks(ctx, cx, cy, r)
 	drawHourLabels(ctx, cx, cy, r)
+	if (showMinute) {
+		drawMinuteLabels(ctx, cx, cy, r)
+	}
 	drawOverlapInnerArc(ctx, cx, cy, r, showOverlap, parts.isOverlapWindow, parts.hourIndex)
 
 	// Draw hands (back to front for proper layering)
