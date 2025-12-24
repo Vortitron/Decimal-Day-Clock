@@ -207,10 +207,16 @@ body {
 	font-size: 13px;
 }
 
-.panel__topbar {
+.panel__section-head {
 	display: flex;
-	justify-content: flex-end;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
 	margin-bottom: 10px;
+}
+
+.panel__section-head .panel__title {
+	margin: 0;
 }
 
 .modal {

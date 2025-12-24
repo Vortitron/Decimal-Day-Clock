@@ -16,7 +16,8 @@ import {
 import { renderAnalogueClock } from './analogue.js'
 
 const CLOCK_TICK_MS = 100
-const STORAGE_KEY = 'decimal-day-clock:v1'
+const STORAGE_KEY = 'numpti:v1'
+const LEGACY_STORAGE_KEY = 'decimal-day-clock:v1'
 
 function $(id) {
 	const el = document.getElementById(id)
@@ -28,7 +29,7 @@ function $(id) {
 
 function logError(context, err) {
 	const message = err instanceof Error ? err.message : String(err)
-	console.error(`[DecimalDayClock] ${context}: ${message}`, err)
+	console.error(`[NUMPTi] ${context}: ${message}`, err)
 }
 
 function setText(el, text) {
@@ -72,14 +73,32 @@ function buildUtcOffsetOptions(selectEl) {
 
 function safeReadSettings() {
 	try {
-		const raw = localStorage.getItem(STORAGE_KEY)
-		if (!raw) {
+		const rawNew = localStorage.getItem(STORAGE_KEY)
+		if (rawNew) {
+			const parsed = JSON.parse(rawNew)
+			if (!parsed || typeof parsed !== 'object') {
+				return null
+			}
+			return parsed
+		}
+
+		const rawLegacy = localStorage.getItem(LEGACY_STORAGE_KEY)
+		if (!rawLegacy) {
 			return null
 		}
-		const parsed = JSON.parse(raw)
+
+		const parsed = JSON.parse(rawLegacy)
 		if (!parsed || typeof parsed !== 'object') {
 			return null
 		}
+
+		// Migrate legacy settings to the new key.
+		try {
+			localStorage.setItem(STORAGE_KEY, rawLegacy)
+		} catch (err) {
+			logError('Failed to migrate legacy settings', err)
+		}
+
 		return parsed
 	} catch (err) {
 		logError('Failed to read settings', err)

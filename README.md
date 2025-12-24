@@ -1,4 +1,4 @@
-# Decimal Day Clock
+# NUMPTi
 
 A fullscreen web clock implementing a proposed metric/decimal time system that divides the day cleanly while keeping the second unchanged and reducing single-point ambiguity at transitions.
 
@@ -12,7 +12,7 @@ This repository is a **static site** (no build step) designed to be hosted on **
   - Examples: `74(8)01`, `46()`, `(6)08`
 - **Overlap/crossover support**: optionally show the alternate reading during the overlap window (indicated by ◐ symbol).
 - **Analogue mode**: 96-hour dial with hands for day-progress (hour), minute-in-hour, and optional seconds. Minute labels (0-9) appear at key positions (every 24 hours) when enabled via checkbox.
-- **Built-in About panel**: a quick explanation of the system, overlap, and date format inside the app.
+- **Built-in “How it works” panel**: a quick explanation of the system, overlap, and date format inside the app.
 - **Midsun (solar noon) helper**: optional geolocation (or manual longitude) to show the *midsun point* in decimal time and the time delta to/from it.
 - **Converters**:
   - Unix time (seconds or milliseconds) → decimal
@@ -27,14 +27,14 @@ This repository is a **static site** (no build step) designed to be hosted on **
 - Each hour is exactly **900 seconds** (= 15 standard minutes).
 
 ### Minutes + seconds
-- Each hour has **10 minutes** (numbered **0 to 9**).
-- Each minute is exactly **100 seconds**.
+- Each hour has **9 normal minutes** (numbered **0 to 8**).
+- Each normal minute is exactly **100 seconds**.
 - Seconds within the minute: **00–99**.
 
 ### Crossover / overlap minute (9)
 - During the first **100 seconds of each hour**, the physical time interval can be labelled in two ways:
   - **Current hour, minute 0**, or
-  - **Previous hour, minute 9** (the "crossover minute")
+  - **Previous hour, minute 9** (the "overlap minute")
 - This spreads the boundary over a window instead of a single instant.
 
 Example around the change from hour 47 to 48:
@@ -110,6 +110,16 @@ This repo is already laid out for **Pages from the repository root**:
 - **Branch**: `main` / `/ (root)`
 
 After it deploys, your site is served over HTTPS (important: browsers typically require **HTTPS** for geolocation).
+
+### Custom domain (`numpti.com`)
+
+This repo includes a `CNAME` file for GitHub Pages. In GitHub:
+
+- Go to **Settings** → **Pages**
+- Set **Custom domain** to `numpti.com`
+- Ensure **Enforce HTTPS** is enabled once the certificate is issued
+
+You’ll also need to point your domain’s DNS to GitHub Pages (exact records depend on your DNS host).
 
 ## Tests
 

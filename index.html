@@ -4,12 +4,12 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<meta name="color-scheme" content="dark light">
-		<title>Decimal Day Clock</title>
+		<title>NUMPTi</title>
 		<link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
 		<link rel="stylesheet" href="./assets/styles.css">
 	</head>
 	<body>
-		<main class="app" aria-label="Decimal Day Clock">
+		<main class="app" aria-label="NUMPTi">
 			<section class="clock" aria-label="Current time">
 				<canvas class="clock__canvas" id="clock-canvas" hidden></canvas>
 				<div class="clock__time" id="clock-time">--:--:--</div>
@@ -18,11 +18,11 @@
 			</section>
 
 			<section class="panel" aria-label="Options and converters">
-				<div class="panel__topbar">
-					<button type="button" class="btn btn--ghost btn--small" id="btn-about" aria-haspopup="dialog" aria-controls="dlg-about">About</button>
-				</div>
 				<div class="panel__section">
-					<h2 class="panel__title">Display</h2>
+					<div class="panel__section-head">
+						<h2 class="panel__title">Display</h2>
+						<button type="button" class="btn btn--ghost btn--small" id="btn-about" aria-haspopup="dialog" aria-controls="dlg-about">How it works</button>
+					</div>
 					<div class="panel__row panel__row--grid">
 						<label class="field">
 							<span class="field__label">Format</span>
@@ -154,15 +154,15 @@
 			</section>
 		</main>
 
-		<dialog class="modal" id="dlg-about" aria-label="About Decimal Day Clock">
+		<dialog class="modal" id="dlg-about" aria-label="About NUMPTi">
 			<div class="modal__head">
-				<div class="modal__title">About</div>
+				<div class="modal__title">How it works</div>
 				<form method="dialog">
 					<button type="submit" class="btn btn--ghost btn--small" aria-label="Close">Close</button>
 				</form>
 			</div>
 			<div class="modal__body">
-				<p><strong>Decimal Day Clock</strong> uses a 96-hour day with fixed-length hours and a small overlap window at each hour boundary to avoid a single “hard” tick.</p>
+				<p><strong>NUMPTi</strong> uses a 96-hour day with fixed-length hours and a small overlap window at each hour boundary to avoid a single “hard” tick.</p>
 
 				<h3>Core time units</h3>
 				<ul>

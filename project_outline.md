@@ -1,4 +1,4 @@
-# Project outline: Decimal Day Clock
+# Project outline: NUMPTi
 
 ## Goals
 
