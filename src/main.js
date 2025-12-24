@@ -428,6 +428,45 @@ function wireSettingsPersistence() {
 	$('in-longitude').addEventListener('input', save)
 }
 
+function wireAboutDialog() {
+	const btn = document.getElementById('btn-about')
+	const dlg = document.getElementById('dlg-about')
+
+	if (!btn || !dlg) {
+		return
+	}
+
+	btn.addEventListener('click', () => {
+		try {
+			if (typeof dlg.showModal === 'function') {
+				dlg.showModal()
+				return
+			}
+			dlg.setAttribute('open', '')
+		} catch (err) {
+			logError('About dialog failed to open', err)
+		}
+	})
+
+	// Close when clicking outside the dialog content (backdrop click).
+	dlg.addEventListener('click', (ev) => {
+		try {
+			if (!(ev.target instanceof HTMLElement)) {
+				return
+			}
+			if (ev.target === dlg) {
+				if (typeof dlg.close === 'function') {
+					dlg.close()
+				} else {
+					dlg.removeAttribute('open')
+				}
+			}
+		} catch (err) {
+			logError('About dialog failed to close', err)
+		}
+	})
+}
+
 function start() {
 	buildUtcOffsetOptions($('sel-offset'))
 
@@ -440,6 +479,7 @@ function start() {
 	wireUnixConverter()
 	wireNormalConverter()
 	wireSettingsPersistence()
+	wireAboutDialog()
 
 	const tick = () => {
 		const nowUnixMs = Date.now()

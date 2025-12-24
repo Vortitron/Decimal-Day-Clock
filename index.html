@@ -18,6 +18,9 @@
 			</section>
 
 			<section class="panel" aria-label="Options and converters">
+				<div class="panel__topbar">
+					<button type="button" class="btn btn--ghost btn--small" id="btn-about" aria-haspopup="dialog" aria-controls="dlg-about">About</button>
+				</div>
 				<div class="panel__section">
 					<h2 class="panel__title">Display</h2>
 					<div class="panel__row panel__row--grid">
@@ -150,6 +153,51 @@
 				</div>
 			</section>
 		</main>
+
+		<dialog class="modal" id="dlg-about" aria-label="About Decimal Day Clock">
+			<div class="modal__head">
+				<div class="modal__title">About</div>
+				<form method="dialog">
+					<button type="submit" class="btn btn--ghost btn--small" aria-label="Close">Close</button>
+				</form>
+			</div>
+			<div class="modal__body">
+				<p><strong>Decimal Day Clock</strong> uses a 96-hour day with fixed-length hours and a small overlap window at each hour boundary to avoid a single “hard” tick.</p>
+
+				<h3>Core time units</h3>
+				<ul>
+					<li><strong>Day</strong>: 86,400 seconds (unchanged)</li>
+					<li><strong>Hour</strong>: 900 seconds (96 hours per day, labelled 00–95)</li>
+					<li><strong>Minute</strong>: 100 seconds</li>
+					<li><strong>Second</strong>: 0–99 within the minute</li>
+				</ul>
+
+				<h3>Minutes 0–8 + overlap minute 9</h3>
+				<p>Each 900-second hour contains <strong>9 normal minutes</strong> (labelled <strong>0–8</strong>). The first 100 seconds of each hour can also be labelled as the <strong>previous hour’s minute 9</strong>.</p>
+				<ul>
+					<li><strong>Primary label</strong> during that window: current hour, minute <strong>0</strong></li>
+					<li><strong>Alternate label</strong>: previous hour, minute <strong>9</strong></li>
+					<li>The <strong>◐</strong> symbol indicates you are looking at an overlap/alternate reading.</li>
+				</ul>
+
+				<h3>Formats</h3>
+				<ul>
+					<li><strong>Brackets</strong>: <code>HH(M)SS</code> e.g. <code>74(8)01</code></li>
+					<li><strong>Colon</strong>: <code>HH:M:SS</code> (minute is single digit)</li>
+				</ul>
+
+				<h3>Date</h3>
+				<p>The date line uses <strong>10-day weeks</strong> in UTC, shown as <code>YYYY(WW.D)</code> where <strong>WW</strong> is a zero-indexed week number and <strong>D</strong> is a zero-indexed day within the 10-day week.</p>
+				<p>Example: <code>2025(35.6)</code>.</p>
+
+				<h3>UTC, converters, and privacy</h3>
+				<ul>
+					<li>The main clock is global and based on <strong>UTC</strong>.</li>
+					<li>Converters accept Unix time and wall time with a fixed UTC offset.</li>
+					<li>Location is only used if you press <strong>Use my location</strong>. Settings are stored in your browser via <strong>localStorage</strong>.</li>
+				</ul>
+			</div>
+		</dialog>
 
 		<script type="module" src="./src/main.js"></script>
 	</body>

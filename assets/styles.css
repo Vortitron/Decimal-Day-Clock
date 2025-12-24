@@ -202,6 +202,87 @@ body {
 	background: transparent;
 }
 
+.btn--small {
+	padding: 8px 10px;
+	font-size: 13px;
+}
+
+.panel__topbar {
+	display: flex;
+	justify-content: flex-end;
+	margin-bottom: 10px;
+}
+
+.modal {
+	width: min(720px, calc(100vw - 32px));
+	border-radius: var(--radius);
+	border: 1px solid var(--panel-border);
+	background: color-mix(in srgb, var(--bg) 82%, transparent);
+	color: var(--text);
+	box-shadow: 0 24px 90px var(--shadow);
+	padding: 0;
+}
+
+.modal::backdrop {
+	background: rgba(0, 0, 0, 0.55);
+	backdrop-filter: blur(3px);
+}
+
+.modal__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 14px 14px;
+	border-bottom: 1px solid var(--panel-border);
+}
+
+.modal__title {
+	font-size: 14px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--muted);
+}
+
+.modal__body {
+	padding: 14px 14px 18px 14px;
+	font-size: 14px;
+	line-height: 1.55;
+	color: var(--text);
+}
+
+.modal__body h3 {
+	margin: 16px 0 8px 0;
+	font-size: 13px;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--muted);
+}
+
+.modal__body p {
+	margin: 10px 0;
+	color: var(--text);
+}
+
+.modal__body ul {
+	margin: 8px 0 12px 18px;
+	padding: 0;
+	color: var(--text);
+}
+
+.modal__body li {
+	margin: 6px 0;
+}
+
+.modal__body code {
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+	font-size: 13px;
+	padding: 1px 6px;
+	border-radius: 8px;
+	border: 1px solid var(--panel-border);
+	background: rgba(0, 0, 0, 0.16);
+}
+
 .field {
 	display: grid;
 	gap: 6px;

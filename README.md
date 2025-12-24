@@ -12,6 +12,7 @@ This repository is a **static site** (no build step) designed to be hosted on **
   - Examples: `74(8)01`, `46()`, `(6)08`
 - **Overlap/crossover support**: optionally show the alternate reading during the overlap window (indicated by ◐ symbol).
 - **Analogue mode**: 96-hour dial with hands for day-progress (hour), minute-in-hour, and optional seconds. Minute labels (0-9) appear at key positions (every 24 hours) when enabled via checkbox.
+- **Built-in About panel**: a quick explanation of the system, overlap, and date format inside the app.
 - **Midsun (solar noon) helper**: optional geolocation (or manual longitude) to show the *midsun point* in decimal time and the time delta to/from it.
 - **Converters**:
   - Unix time (seconds or milliseconds) → decimal
