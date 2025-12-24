@@ -5,7 +5,8 @@ const HOURS_PER_DAY = 96
 const SECONDS_PER_DAY = 86_400
 const SECONDS_PER_HOUR = 900
 const SECONDS_PER_MINUTE = 100
-const MINUTES_PER_HOUR = 10 // 0-9 (minute 9 is the crossover)
+const NORMAL_MINUTES_PER_HOUR = 9 // 0–8 (minute 9 is overlap only)
+const OVERLAP_MINUTE = 9
 
 function assertCanvas(canvas) {
 	if (!(canvas instanceof HTMLCanvasElement)) {
@@ -112,17 +113,19 @@ function drawHourLabels(ctx, cx, cy, rOuter) {
 
 function drawMinuteTicks(ctx, cx, cy, rOuter) {
 	// Draw a minute dial INSIDE the hour ring.
-	// Minutes are 0–9 and the minute hand makes one full revolution per hour,
-	// so the minute scale is a 10-division ring around the full circle.
+	// The minute hand makes one full revolution per hour.
+	//
+	// With 900-second hours and 100-second minutes, there are 9 normal minutes (0–8).
+	// Minute 9 exists only as the overlap label for minute 0 of the next hour (shown elsewhere).
 	ctx.save()
 
 	const rDial = rOuter - 14
 	const tickLenMajor = 10
 	const tickLenMinor = 6
 
-	for (let minute = 0; minute < MINUTES_PER_HOUR; minute += 1) {
+	for (let minute = 0; minute < NORMAL_MINUTES_PER_HOUR; minute += 1) {
 		const isMajor = minute === 0
-		const a = angleFromTop(minute / MINUTES_PER_HOUR)
+		const a = angleFromTop(minute / NORMAL_MINUTES_PER_HOUR)
 
 		const len = isMajor ? tickLenMajor : tickLenMinor
 		const rInner = rDial - len
@@ -144,7 +147,7 @@ function drawMinuteTicks(ctx, cx, cy, rOuter) {
 }
 
 function drawMinuteLabels(ctx, cx, cy, rOuter) {
-	// Draw minute numbers (0–9) around the full-circle minute dial.
+	// Draw minute numbers (0–8) around the full-circle minute dial.
 	ctx.save()
 	ctx.textAlign = 'center'
 	ctx.textBaseline = 'middle'
@@ -153,8 +156,8 @@ function drawMinuteLabels(ctx, cx, cy, rOuter) {
 	const fontPx = Math.max(10, Math.floor(rOuter * 0.050))
 	ctx.font = `600 ${fontPx}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace`
 
-	for (let minute = 0; minute < MINUTES_PER_HOUR; minute += 1) {
-		const a = angleFromTop(minute / MINUTES_PER_HOUR)
+	for (let minute = 0; minute < NORMAL_MINUTES_PER_HOUR; minute += 1) {
+		const a = angleFromTop(minute / NORMAL_MINUTES_PER_HOUR)
 		const x = cx + (Math.cos(a) * rLabel)
 		const y = cy + (Math.sin(a) * rLabel)
 
@@ -183,7 +186,7 @@ function drawOverlapInnerArc(ctx, cx, cy, r, showOverlap, isInOverlap, hourIndex
 	}
 
 	// Small inner arc at the top (0° position) showing the overlap window.
-	// This represents minute 9 (the crossover minute).
+	// This represents minute 9 (the overlap minute).
 	// It spans the first 100 seconds (0-99) of the current hour, which is also minute 9 of the previous hour.
 	const rInner = r * 0.75
 	const overlapSpan = SECONDS_PER_MINUTE / SECONDS_PER_HOUR // 100/900 ≈ 0.111
@@ -215,7 +218,60 @@ function drawOverlapInnerArc(ctx, cx, cy, r, showOverlap, isInOverlap, hourIndex
 	ctx.font = `600 ${fontPx}px ui-monospace, monospace`
 
 	const hh = String(prevHour).padStart(2, '0')
-	ctx.fillText(`${hh}(9)`, labelX, labelY)
+	ctx.fillText(`${hh}(${OVERLAP_MINUTE})`, labelX, labelY)
+	ctx.restore()
+}
+
+function drawSecondsSubdial(ctx, cx, cy, rOuter, secondInMinutePrecise) {
+	// Draw seconds on a small sub-dial at the bottom, to avoid confusing the scale
+	// with the main hour/minute face.
+	const subCx = cx
+	const subCy = cy + (rOuter * 0.46)
+	const subR = rOuter * 0.18
+
+	const fraction = secondInMinutePrecise / SECONDS_PER_MINUTE
+	const angle = angleFromTop(fraction)
+
+	// Ring
+	ctx.save()
+	ctx.beginPath()
+	ctx.arc(subCx, subCy, subR, 0, TAU)
+	ctx.strokeStyle = 'rgba(255,255,255,0.10)'
+	ctx.lineWidth = 2
+	ctx.stroke()
+	ctx.restore()
+
+	// Ticks (major every 10 seconds)
+	ctx.save()
+	for (let s = 0; s < 100; s += 10) {
+		const a = angleFromTop(s / 100)
+		const rTickOuter = subR
+		const rTickInner = subR - 8
+		const x1 = subCx + (Math.cos(a) * rTickInner)
+		const y1 = subCy + (Math.sin(a) * rTickInner)
+		const x2 = subCx + (Math.cos(a) * rTickOuter)
+		const y2 = subCy + (Math.sin(a) * rTickOuter)
+
+		ctx.beginPath()
+		ctx.moveTo(x1, y1)
+		ctx.lineTo(x2, y2)
+		ctx.strokeStyle = 'rgba(255,255,255,0.18)'
+		ctx.lineWidth = 2
+		ctx.stroke()
+	}
+	ctx.restore()
+
+	// Hand
+	drawHand(ctx, subCx, subCy, angle, subR * 0.86, 2, 'rgba(255,110,138,0.90)', 0)
+
+	// Value (subtle)
+	ctx.save()
+	ctx.fillStyle = 'rgba(255,255,255,0.35)'
+	ctx.textAlign = 'center'
+	ctx.textBaseline = 'middle'
+	const fontPx = Math.max(10, Math.floor(subR * 0.40))
+	ctx.font = `600 ${fontPx}px ui-monospace, monospace`
+	ctx.fillText(String(Math.floor(secondInMinutePrecise)).padStart(2, '0'), subCx, subCy)
 	ctx.restore()
 }
 
@@ -274,7 +330,8 @@ export function renderAnalogueClock({ canvas, utcSecondsOfDay, showSeconds, show
 
 	const parts = getDecimalPartsFromUtcSecondsOfDay(seconds)
 	const minuteFraction = parts.secondsIntoHour / SECONDS_PER_HOUR
-	const secondFraction = parts.secondInMinute / SECONDS_PER_MINUTE
+	const secondInMinutePrecise = parts.secondsIntoHour - (Math.floor(parts.secondsIntoHour / SECONDS_PER_MINUTE) * SECONDS_PER_MINUTE)
+	const secondFraction = secondInMinutePrecise / SECONDS_PER_MINUTE
 
 	// Draw static face elements
 	drawDayProgressArc(ctx, cx, cy, r, dayFraction)
@@ -290,7 +347,6 @@ export function renderAnalogueClock({ canvas, utcSecondsOfDay, showSeconds, show
 	// Draw hands (back to front for proper layering)
 	const hourAngle = angleFromTop(dayFraction)
 	const minuteAngle = angleFromTop(minuteFraction)
-	const secondAngle = angleFromTop(secondFraction)
 
 	// Hour hand (one revolution per day = 96 hours)
 	drawHand(ctx, cx, cy, hourAngle, r * 0.48, 6, 'rgba(110,231,255,0.95)', r * 0.10)
@@ -300,7 +356,7 @@ export function renderAnalogueClock({ canvas, utcSecondsOfDay, showSeconds, show
 
 	// Second hand (one revolution per minute = 100 seconds)
 	if (showSeconds) {
-		drawHand(ctx, cx, cy, secondAngle, r * 0.82, 2, 'rgba(255,110,138,0.90)', 0)
+		drawSecondsSubdial(ctx, cx, cy, r, secondInMinutePrecise)
 	}
 
 	drawCentreDot(ctx, cx, cy, 6)
