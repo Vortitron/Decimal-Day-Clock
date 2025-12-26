@@ -2,6 +2,8 @@
 
 A fullscreen web clock implementing a proposed metric/decimal time system that divides the day cleanly while keeping the second unchanged and reducing single-point ambiguity at transitions.
 
+**NUMPTi** stands for **N**ew **U**niversal **M**etric **P**artitioned **T**ime — styled as **NUMPTi** because the trailing lower-case **i** is part of **T**ime.
+
 This repository is a **static site** (no build step) designed to be hosted on **GitHub Pages**.
 
 ## What you get
